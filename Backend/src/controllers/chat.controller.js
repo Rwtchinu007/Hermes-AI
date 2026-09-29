@@ -56,7 +56,6 @@ export async function sendMessage(req, res) {
     chatId: currentChatId,
   });
 
-  
   try {
     let finalResponse = "";
 

@@ -17,30 +17,30 @@ import {
   addMessages,
   addStreamingMessage,
   appendMessageChunk,
+  removeChat,
 } from "../chat.slice";
 
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useRef } from "react";
 
 export const useChat = () => {
   const dispatch = useDispatch();
 
-  // Socket ko poore hook mein accessible rakhne ke liye
   const socketRef = useRef(null);
 
-  // ---------------------------------------
-  // Initialize Socket + Listen for events
-  // ---------------------------------------
+  // Current opened chat
+  const currentChatId = useSelector((state) => state.chat.currentChatId);
+
+  // ==============================
+  // SOCKET CONNECTION
+  // ==============================
 
   useEffect(() => {
     const socket = initializeSocketConnection();
 
     socketRef.current = socket;
 
-    // ---------------------------------------
-    // Receive AI streaming chunks
-    // ---------------------------------------
-
+    // AI streaming chunks
     socket.on("ai-chunk", ({ chatId, chunk }) => {
       dispatch(
         appendMessageChunk({
@@ -50,20 +50,14 @@ export const useChat = () => {
       );
     });
 
-    // ---------------------------------------
-    // AI response complete
-    // ---------------------------------------
-
+    // AI streaming completed
     socket.on("ai-complete", ({ chatId }) => {
       dispatch(setLoading(false));
 
       console.log("AI streaming completed:", chatId);
     });
 
-    // ---------------------------------------
     // AI streaming error
-    // ---------------------------------------
-
     socket.on("ai-error", ({ chatId, message }) => {
       console.error("AI streaming error:", message);
 
@@ -71,10 +65,7 @@ export const useChat = () => {
       dispatch(setLoading(false));
     });
 
-    // ---------------------------------------
-    // Cleanup listeners
-    // ---------------------------------------
-
+    // Cleanup
     return () => {
       socket.off("ai-chunk");
       socket.off("ai-complete");
@@ -82,30 +73,23 @@ export const useChat = () => {
     };
   }, [dispatch]);
 
-  // ---------------------------------------
-  // Send Message
-  // ---------------------------------------
+  // ==============================
+  // SEND MESSAGE
+  // ==============================
 
   async function handleSendMessage({ message, chatId }) {
     try {
       dispatch(setLoading(true));
 
-      // Current socket
       const socket = socketRef.current;
 
-      // Make sure socket exists
       if (!socket) {
         throw new Error("Socket connection is not initialized");
       }
 
-      // Make sure socket is connected
       if (!socket.connected) {
         throw new Error("Socket is not connected");
       }
-
-      // ---------------------------------------
-      // Send message to backend
-      // ---------------------------------------
 
       const data = await sendMessage({
         message,
@@ -115,26 +99,21 @@ export const useChat = () => {
 
       const { chat } = data;
 
-      // Existing chat OR newly created chat
+      // If no chatId was provided,
+      // backend created a new chat
       const currentChatId = chatId || chat._id;
 
-      // ---------------------------------------
       // Create new chat in Redux
-      // ---------------------------------------
-
       if (!chatId) {
         dispatch(
           createNewChat({
             chatId: chat._id,
-            title: chat.title,
+            title: chat.title?.replace(/\*\*/g, "").replace(/__/g, "").trim(),
           }),
         );
       }
 
-      // ---------------------------------------
       // Add user's message
-      // ---------------------------------------
-
       dispatch(
         addNewMessage({
           chatId: currentChatId,
@@ -143,46 +122,51 @@ export const useChat = () => {
         }),
       );
 
-      // ---------------------------------------
       // Create empty AI message
-      // ---------------------------------------
-
+      // Streaming chunks will be added to this message
       dispatch(
         addStreamingMessage({
           chatId: currentChatId,
         }),
       );
 
-      // ---------------------------------------
-      // Set current chat
-      // ---------------------------------------
-
+      // Make this chat active
       dispatch(setCurrentChatId(currentChatId));
     } catch (error) {
       console.error("Error sending message:", error);
 
-      dispatch(setError(error.message));
+      dispatch(
+        setError(
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to send message",
+        ),
+      );
+
       dispatch(setLoading(false));
     }
   }
 
-  // ---------------------------------------
-  // Get all chats
-  // ---------------------------------------
+  // ==============================
+  // GET ALL CHATS
+  // ==============================
 
   async function handleGetChats() {
     try {
       dispatch(setLoading(true));
 
       const data = await getChats();
+
       const { chats } = data;
 
+      // Convert array from backend
+      // into object keyed by chat ID
       dispatch(
         setChats(
           chats.reduce((acc, chat) => {
             acc[chat._id] = {
               id: chat._id,
-              title: chat.title,
+              title: chat.title?.replace(/\*\*/g, "").replace(/__/g, "").trim(),
               messages: [],
               lastUpdated: chat.updatedAt,
             };
@@ -196,19 +180,29 @@ export const useChat = () => {
     } catch (error) {
       console.error("Error fetching chats:", error);
 
-      dispatch(setError(error.message));
+      dispatch(
+        setError(
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to fetch chats",
+        ),
+      );
+
       dispatch(setLoading(false));
     }
   }
 
-  // ---------------------------------------
-  // Open Chat
-  // ---------------------------------------
+  // ==============================
+  // OPEN CHAT
+  // ==============================
 
   async function handleOpenChat(chatId, chats) {
     try {
+      // Messages are fetched only if
+      // they haven't already been loaded
       if (chats[chatId]?.messages.length === 0) {
         const data = await getMessages(chatId);
+
         const { messages } = data;
 
         const formattedMessages = messages.map((msg) => ({
@@ -224,18 +218,64 @@ export const useChat = () => {
         );
       }
 
+      // Make selected chat active
       dispatch(setCurrentChatId(chatId));
     } catch (error) {
       console.error("Error opening chat:", error);
 
-      dispatch(setError(error.message));
+      dispatch(
+        setError(
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to open chat",
+        ),
+      );
     }
   }
+
+  // ==============================
+  // DELETE CHAT
+  // ==============================
+
+  async function handleDeleteChat(chatId) {
+    try {
+      dispatch(setLoading(true));
+
+      // Delete from backend/database
+      await deleteChat(chatId);
+
+      // Delete from Redux state
+      dispatch(removeChat(chatId));
+
+      // If the deleted chat was currently open,
+      // clear the current chat
+      if (chatId === currentChatId) {
+        dispatch(setCurrentChatId(null));
+      }
+    } catch (error) {
+      console.error("Error deleting chat:", error);
+
+      dispatch(
+        setError(
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to delete chat",
+        ),
+      );
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }
+
+  // ==============================
+  // RETURN
+  // ==============================
 
   return {
     initializeSocketConnection,
     handleSendMessage,
     handleGetChats,
     handleOpenChat,
+    handleDeleteChat,
   };
 };

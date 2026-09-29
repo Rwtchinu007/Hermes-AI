@@ -40,6 +40,13 @@ const chatSlice = createSlice({
       };
     },
 
+    // Chat delete karne ke liye
+removeChat: (state, action) => {
+  const chatId = action.payload;
+
+  delete state.chats[chatId];
+},
+
     // 🔥 Streaming ke time empty AI message create karega
     addStreamingMessage: (state, action) => {
       const { chatId } = action.payload;
@@ -101,6 +108,7 @@ export const {
   createNewChat,
   addNewMessage,
   addMessages,
+  removeChat,
 
   // 🔥 Streaming actions
   addStreamingMessage,
