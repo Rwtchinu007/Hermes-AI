@@ -69,16 +69,12 @@ const Dashboard = () => {
   // ==========================================
 
   const handleNewChat = () => {
-    // Clear currently selected chat
     dispatch(setCurrentChatId(null));
 
-    // Clear input
     setChatInput("");
 
-    // Close any open menu
     setOpenMenu(null);
 
-    // Close mobile sidebar
     setSidebarOpen(false);
   };
 
@@ -110,6 +106,27 @@ const Dashboard = () => {
 
   const chatList = Object.values(chats || {});
 
+  // ==========================================
+  // RANDOM GREETING
+  // ==========================================
+
+  const greetings = [
+    "How can I help?",
+    "What’s on your mind?",
+    "What shall we work on?",
+    "Ready when you are.",
+    "Where should we start?",
+    "What are you curious about?",
+    "Let’s build something.",
+    "What can we figure out?",
+    "What would you like to explore?",
+    "What are we working on today?",
+  ];
+
+  const [greeting] = useState(() => {
+    return greetings[Math.floor(Math.random() * greetings.length)];
+  });
+
   return (
     <>
       {/* ==========================================
@@ -125,7 +142,6 @@ const Dashboard = () => {
             font-style: normal;
             font-display: swap;
           }
-
 
           /* ==========================================
              HERMES SCROLLBAR
@@ -160,6 +176,110 @@ const Dashboard = () => {
           .hermes-scrollbar::-webkit-scrollbar-corner {
             background: transparent;
           }
+
+          /* ==========================================
+             EMPTY STATE
+          ========================================== */
+
+          .hermes-empty-state {
+            transition:
+              opacity 420ms ease,
+              transform 750ms cubic-bezier(0.22, 1, 0.36, 1);
+          }
+
+          .hermes-empty-state.chat-started {
+            opacity: 0;
+            transform: translateY(-70px) scale(0.97);
+            pointer-events: none;
+          }
+
+          /* ==========================================
+             CHAT CONTENT
+          ========================================== */
+
+          .hermes-chat-content {
+            transition:
+              transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 350ms ease;
+          }
+
+          .hermes-chat-content.chat-entering {
+            animation: hermesChatEnter 550ms
+              cubic-bezier(0.22, 1, 0.36, 1);
+          }
+
+          @keyframes hermesChatEnter {
+            0% {
+              opacity: 0;
+              transform: translateY(45px);
+            }
+
+            55% {
+              opacity: 1;
+              transform: translateY(-6px);
+            }
+
+            100% {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+
+          /* ==========================================
+             USER MESSAGE
+          ========================================== */
+
+          .hermes-user-message {
+            animation: hermesUserMessage 420ms
+              cubic-bezier(0.22, 1, 0.36, 1);
+          }
+
+          @keyframes hermesUserMessage {
+            0% {
+              opacity: 0;
+              transform: translateY(28px) scale(0.97);
+            }
+
+            100% {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
+          }
+
+          /* ==========================================
+             AI MESSAGE
+          ========================================== */
+
+          .hermes-ai-message {
+            animation: hermesAiMessage 450ms
+              cubic-bezier(0.22, 1, 0.36, 1);
+          }
+
+          @keyframes hermesAiMessage {
+            0% {
+              opacity: 0;
+              transform: translateY(18px);
+            }
+
+            100% {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+
+          /* ==========================================
+             REDUCE MOTION
+          ========================================== */
+
+          @media (prefers-reduced-motion: reduce) {
+            .hermes-empty-state,
+            .hermes-chat-content,
+            .hermes-user-message,
+            .hermes-ai-message {
+              animation: none !important;
+              transition: none !important;
+            }
+          }
         `}
       </style>
 
@@ -168,8 +288,13 @@ const Dashboard = () => {
       ========================================== */}
 
       <main
-        className="min-h-screen w-full bg-[#181818] text-[#eeeeee]
-       font-[system-ui]"
+        className="
+          min-h-screen
+          w-full
+          bg-[#181818]
+          text-[#eeeeee]
+          font-[system-ui]
+        "
       >
         <div className="flex h-screen w-full overflow-hidden">
           {/* ==========================================
@@ -178,7 +303,13 @@ const Dashboard = () => {
 
           {sidebarOpen && (
             <div
-              className="fixed inset-0 z-40 bg-black/50 md:hidden"
+              className="
+                fixed
+                inset-0
+                z-40
+                bg-black/50
+                md:hidden
+              "
               onClick={() => setSidebarOpen(false)}
             />
           )}
@@ -199,9 +330,9 @@ const Dashboard = () => {
               flex-col
 
               border-r
-              border-[#303030]
+              border-[#e08d2e6f]
 
-              bg-[#202020]
+              bg-[#0f0e0e]
 
               transition-transform
               duration-200
@@ -218,12 +349,18 @@ const Dashboard = () => {
             ========================================== */}
 
             <div className="flex h-20 items-center px-5">
-              <h1 className="font-[Audex] text-[28px] font-normal tracking-tight text-[#e08d2e]">
+              <h1
+                className="
+                  font-[Audex]
+                  text-[24px]
+                  font-normal
+                  tracking-tight
+                  text-[#e08d2e]
+                "
+              >
                 Hermes
                 <span className="font-sans text-white/70">.ai</span>
               </h1>
-
-              {/* Mobile close button */}
 
               <button
                 type="button"
@@ -249,7 +386,7 @@ const Dashboard = () => {
             </div>
 
             {/* ==========================================
-                NEW CHAT BUTTON
+                NEW CHAT
             ========================================== */}
 
             <div className="px-4 pb-4">
@@ -262,16 +399,20 @@ const Dashboard = () => {
                   w-full
                   items-center
                   gap-3
+
                   rounded-xl
                   border
                   border-[#3a3a3a]
                   bg-[#252525]
+
                   px-4
                   py-3
+
                   text-left
                   text-sm
                   font-medium
                   text-[#eeeeee]
+
                   transition
                   hover:bg-[#2b2b2b]
                 "
@@ -286,9 +427,24 @@ const Dashboard = () => {
                 CHAT LIST
             ========================================== */}
 
-            <div className="hermes-scrollbar flex-1 overflow-y-auto px-3 pb-4">
+            <div
+              className="
+                hermes-scrollbar
+                flex-1
+                overflow-y-auto
+                px-3
+                pb-4
+              "
+            >
               {chatList.length === 0 ? (
-                <div className="px-3 py-6 text-sm text-[#777777]">
+                <div
+                  className="
+                    px-3
+                    py-6
+                    text-sm
+                    text-[#777777]
+                  "
+                >
                   No chats yet
                 </div>
               ) : (
@@ -298,9 +454,7 @@ const Dashboard = () => {
 
                     return (
                       <div key={chatItem.id} className="group relative">
-                        {/* ==========================================
-                            CHAT
-                        ========================================== */}
+                        {/* CHAT */}
 
                         <button
                           type="button"
@@ -309,18 +463,22 @@ const Dashboard = () => {
                             flex
                             w-full
                             items-center
+
                             rounded-lg
+
                             px-3
                             py-2.5
                             pr-10
+
                             text-left
                             text-sm
+
                             transition
 
                             ${
                               isActive
-                                ? "bg-[#2b2b2b] text-white"
-                                : "text-[#b5b5b5] hover:bg-[#292929] hover:text-[#eeeeee]"
+                                ? "border-l-2 border-[#e08d2e] bg-[#2b2722] pl-[10px] text-white shadow-[inset_0_0_18px_rgba(224,141,46,0.05)]"
+                                : "border-l-2 border-transparent text-[#b5b5b5] hover:bg-[#292929] hover:text-[#eeeeee]"
                             }
                           `}
                         >
@@ -329,9 +487,7 @@ const Dashboard = () => {
                           </span>
                         </button>
 
-                        {/* ==========================================
-                            THREE DOT BUTTON
-                        ========================================== */}
+                        {/* THREE DOT */}
 
                         <button
                           type="button"
@@ -347,14 +503,19 @@ const Dashboard = () => {
                             absolute
                             right-2
                             top-1/2
+
                             flex
                             h-7
                             w-7
+
                             -translate-y-1/2
+
                             items-center
                             justify-center
+
                             rounded-md
                             text-[#777777]
+
                             opacity-0
                             transition
 
@@ -362,6 +523,8 @@ const Dashboard = () => {
 
                             hover:bg-[#353535]
                             hover:text-white
+
+                            max-md:opacity-100
 
                             ${
                               openMenu === chatItem.id
@@ -373,9 +536,7 @@ const Dashboard = () => {
                           <MoreHorizontal size={18} strokeWidth={2} />
                         </button>
 
-                        {/* ==========================================
-                            DELETE MENU
-                        ========================================== */}
+                        {/* DELETE MENU */}
 
                         {openMenu === chatItem.id && (
                           <div
@@ -384,12 +545,16 @@ const Dashboard = () => {
                               right-2
                               top-10
                               z-20
+
                               w-36
+
                               rounded-lg
                               border
                               border-[#3a3a3a]
                               bg-[#242424]
+
                               p-1
+
                               shadow-xl
                             "
                             onClick={(event) => event.stopPropagation()}
@@ -402,13 +567,18 @@ const Dashboard = () => {
                                 w-full
                                 items-center
                                 gap-2.5
+
                                 rounded-md
+
                                 px-3
                                 py-2
+
                                 text-left
                                 text-sm
                                 text-[#d0d0d0]
+
                                 transition
+
                                 hover:bg-[#303030]
                                 hover:text-white
                               "
@@ -430,34 +600,76 @@ const Dashboard = () => {
                 USER INFO
             ========================================== */}
 
-            <div className="border-t border-[#303030] p-4">
-              <div className="flex items-center gap-3">
-                {/* User icon */}
+            <div className="p-2">
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-3
 
+                  rounded-r-2xl
+                  rounded-l-2xl
+
+                  border
+                  border-white/[0.07]
+
+                  bg-[#141414]
+
+                  px-3
+                  py-3
+
+                  shadow-[0_4px_18px_rgba(0,0,0,0.16)]
+
+                  transition
+                  
+
+                  hover:border-[#e08d2e7d]
+                  hover:bg-[#1b1a19]
+                "
+              >
                 <div
                   className="
                     flex
-                    h-8
-                    w-8
+                    h-9
+                    w-9
                     shrink-0
+
                     items-center
                     justify-center
+
                     rounded-full
-                    bg-[#2b2b2b]
-                    text-[#8a8a8a]
+
+                    border
+                    border-[#e08d2e22]
+
+                    bg-[#252321]
+
+                    text-[#a0a0a0]
                   "
                 >
                   <User size={17} strokeWidth={1.8} />
                 </div>
 
-                {/* User information */}
-
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-[#eeeeee]">
+                  <p
+                    className="
+                      truncate
+                      text-sm
+                      font-medium
+                      text-[#eeeeee]
+                    "
+                  >
                     {user?.username || "User"}
                   </p>
 
-                  <p className="mt-1 truncate text-xs text-[#777777]">
+                  <p
+                    className="
+                      mt-1
+                      truncate
+                      text-xs
+                      text-[#777777]
+                    "
+                  >
                     {user?.email || ""}
                   </p>
                 </div>
@@ -469,12 +681,46 @@ const Dashboard = () => {
               MAIN CHAT AREA
           ========================================== */}
 
-          <section className="relative flex min-w-0 flex-1 flex-col bg-[#181818]">
+          <section
+            className="
+              hermes-dashboard
+              relative
+              flex
+              min-w-0
+              flex-1
+              flex-col
+              text-[#ececec]
+            "
+            style={{
+              background: `
+                linear-gradient(
+                  180deg,
+                  #111111 0%,
+                  #0e0e0e 50%,
+                  #0b0b0b 100%
+                )
+              `,
+            }}
+          >
             {/* ==========================================
                 MOBILE HEADER
             ========================================== */}
 
-            <header className="flex h-16 items-center border-b border-[#303030] px-4 md:hidden">
+            <header
+              className="
+                flex
+                h-14
+                shrink-0
+                items-center
+
+                border-b
+                border-[#292929]
+
+                px-3
+
+                md:hidden
+              "
+            >
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
@@ -485,20 +731,49 @@ const Dashboard = () => {
                   w-9
                   items-center
                   justify-center
+
                   rounded-lg
-                  text-[#aaaaaa]
+
+                  text-[#8f8f8f]
+
                   transition
-                  hover:bg-[#252525]
-                  hover:text-white
+
+                  hover:bg-[#242424]
+                  hover:text-[#eeeeee]
+
+                  active:scale-95
                 "
               >
-                <Menu size={21} strokeWidth={1.8} />
+                <Menu size={20} strokeWidth={1.8} />
               </button>
 
-              <div className="ml-3 text-lg">
-                <span className="font-[Audex] text-[#e08d2e]">Hermes</span>
+              <div
+                className="
+                  ml-2
+                  flex
+                  items-center
+                  text-[18px]
+                  leading-none
+                "
+              >
+                <span
+                  className="
+                    font-[Audex]
+                    text-[#e08d2e]
+                  "
+                >
+                  Hermes
+                </span>
 
-                <span className="font-sans text-white/70">.ai</span>
+                <span
+                  className="
+                    ml-[1px]
+                    font-[system-ui]
+                    text-[#8b8b8b]
+                  "
+                >
+                  .ai
+                </span>
               </div>
             </header>
 
@@ -506,101 +781,233 @@ const Dashboard = () => {
                 MESSAGES AREA
             ========================================== */}
 
-            <div className="hermes-scrollbar flex-1 overflow-y-auto">
-              <div className="mx-auto flex w-full max-w-3xl flex-col px-4 pb-36 pt-8 md:px-6 md:pt-12">
-                {/* ==========================================
+            <div
+              className="
+                hermes-scrollbar
+                min-h-0
+                flex-1
+                overflow-y-auto
+              "
+            >
+              <div
+                className={`
+                  relative
+                  mx-auto
+                  flex
+                  w-full
+                  max-w-[860px]
+
+                  flex-col
+
+                  px-4
+                  pb-40
+
+                  sm:px-6
+                  md:px-8
+
+                  transition-all
+                  duration-500
+                  ease-[cubic-bezier(0.22,1,0.36,1)]
+
+                  ${
+                    currentChatId
+                      ? "pt-6 sm:pt-8 md:pt-10"
+                      : "pt-6 sm:pt-8 md:pt-12"
+                  }
+                `}
+              >
+                {/* =================================================
                     EMPTY STATE
-                ========================================== */}
+                ================================================= */}
 
-                {!currentChatId ? (
-                  <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-                    {/* Hermes H */}
+                <div
+                  className={`
+                    hermes-empty-state
 
-                    <div
+                    flex
+                    min-h-[62vh]
+
+                    flex-col
+                    items-center
+                    justify-center
+
+                    px-4
+
+                    text-center
+
+                    ${
+                      currentChatId
+                        ? "chat-started absolute inset-x-0 top-0"
+                        : ""
+                    }
+                  `}
+                >
+                  {/* FAVICON */}
+
+                  <div
+                    className="
+                      mb-6
+
+                      flex
+                      h-15
+                      w-15
+
+                      items-center
+                      justify-center
+
+                      overflow-hidden
+
+                      rounded-xl
+
+                      border
+                      border-[#1e1c1c]
+
+                      bg-[#000000]
+                    "
+                  >
+                    <img
+                      src="/favicon.png"
+                      alt="Hermes"
                       className="
-                        mb-6
-                        flex
-                        h-16
-                        w-16
-                        items-center
-                        justify-center
-                        rounded-2xl
-                        border
-                        border-[#363636]
-                        bg-[#202020]
+                        h-14
+                        w-14
+
+                        rounded-lg
+                        object-cover
                       "
-                    >
-                      <span className="font-[Audex] text-3xl text-[#e08d2e]">
-                        H
-                      </span>
-                    </div>
-
-                    <h2 className="text-2xl font-medium tracking-tight text-[#eeeeee] md:text-3xl">
-                      How can I help you?
-                    </h2>
-
-                    <p className="mt-2 text-sm text-[#707070]">
-                      Ask anything and start a conversation.
-                    </p>
+                    />
                   </div>
-                ) : (
-                  /* ==========================================
-                      CHAT MESSAGES
-                  ========================================== */
 
-                  <div className="space-y-6">
+                  {/* HEADING */}
+
+                  <h1
+                    className="
+                      text-[24px]
+                      font-extralight
+
+                      tracking-[0.005em]
+
+                      text-[#ffffff]
+
+                      sm:text-[26px]
+                      md:text-[32px]
+                    "
+                  >
+                    {greeting}
+                  </h1>
+
+                  {/* SUBTITLE */}
+
+                  <p
+                    className="
+                      mt-2
+
+                      max-w-[380px]
+
+                      font-[system-ui]
+                      text-transform: uppercase
+
+                      text-[13px]
+                      leading-6
+
+                      text-[#]
+
+                      sm:text-[16px]
+                    "
+                  >
+                    Think. Create. Explore.
+                  </p>
+                </div>
+
+                {/* =================================================
+                    CHAT MESSAGES
+                ================================================== */}
+
+                {currentChatId && (
+                  <div
+                    className="
+                      hermes-chat-content
+                      chat-entering
+
+                      w-full
+
+                      space-y-8
+
+                      font-[system-ui]
+                    "
+                  >
                     {chats[currentChatId]?.messages?.map((message, index) => (
-                      <div
-                        key={index}
-                        className={`
-                            flex
-                            w-full
-
-                            ${
-                              message.role === "user"
-                                ? "justify-end"
-                                : "justify-start"
-                            }
-                          `}
-                      >
-                        {/* ==========================================
+                      <div key={index} className="w-full">
+                        {/* =========================================
                               USER MESSAGE
                           ========================================== */}
 
                         {message.role === "user" ? (
                           <div
                             className="
-                                max-w-[85%]
-                                rounded-2xl
-                                rounded-br-md
-                                bg-[#292929]
-                                px-4
-                                py-3
-                                text-sm
-                                leading-6
-                                text-[#eeeeee]
-                                md:max-w-[75%]
-                                md:text-base
+                                flex
+                                w-full
+                                justify-end
                               "
                           >
-                            <p className="whitespace-pre-wrap">
-                              {message.content}
-                            </p>
+                            <div
+                              className="
+                                  hermes-user-message
+
+                                  max-w-[88%]
+
+                                  rounded-2xl
+                                  rounded-br-md
+
+                                  bg-[#292929]
+
+                                  px-4
+                                  py-3
+
+                                  font-[system-ui]
+
+                                  text-[14px]
+                                  leading-6
+
+                                  text-[#eeeeee]
+
+                                  sm:max-w-[78%]
+
+                                  md:max-w-[70%]
+                                  md:text-[15px]
+                                "
+                            >
+                              <p
+                                className="
+                                    whitespace-pre-wrap
+                                    break-words
+                                  "
+                              >
+                                {message.content}
+                              </p>
+                            </div>
                           </div>
                         ) : (
-                          /* ==========================================
-                                AI MESSAGE
+                          /* =========================================
+                               AI MESSAGE
                             ========================================== */
 
                           <div
                             className="
+                                hermes-ai-message
+
                                 w-full
-                                max-w-[85%]
-                                text-sm
+
+                                max-w-[720px]
+
+                                font-[system-ui]
+
+                                text-[14px]
                                 leading-7
-                                text-[#dddddd]
-                                md:max-w-[80%]
-                                md:text-base
+
+                                text-[#d4d4d4]
+
+                                sm:text-[15px]
                               "
                           >
                             <MarkdownRenderer content={message.content} />
@@ -613,52 +1020,79 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* ==========================================
-                CHAT INPUT
-            ========================================== */}
+            {/* =====================================================
+                CHAT COMPOSER
+            ====================================================== */}
 
             <div
               className="
+                pointer-events-none
+
                 absolute
                 bottom-0
                 left-0
                 right-0
-                bg-gradient-to-t
-                from-[#181818]
-                via-[#181818]
-                to-transparent
-                px-4
-                pb-4
-                pt-10
+
+                px-3
+                pb-3
+                pt-16
+
+                sm:px-5
+                sm:pb-5
+
                 md:px-6
                 md:pb-6
               "
+              style={{
+                background:
+                  "linear-gradient(to top, #0b0b0b 20%, rgba(11,11,11,0.94) 58%, rgba(11,11,11,0) 100%)",
+              }}
             >
               <form
                 onSubmit={handleSubmitMessage}
                 className="
+                  pointer-events-auto
+
                   mx-auto
-                  flex
+
                   w-full
-                  max-w-3xl
-                  items-center
+
+                  max-w-[760px]
                 "
               >
                 <div
                   className="
                     flex
+                    min-h-[54px]
                     w-full
+
                     items-center
-                    rounded-2xl
+
+                    rounded-[18px]
+
                     border
-                    border-[#3a3a3a]
-                    bg-[#202020]
-                    px-4
+                    border-[#363636]
+
+                    bg-[#1c1c1c]
+
+                    px-3
                     py-2
+
+                    shadow-[0_8px_30px_rgba(0,0,0,0.22)]
+
                     transition
-                    focus-within:border-[#555555]
+
+                    focus-within:border-[#9a5f1c80]
+                    focus-within:bg-[#151515]
+
+                    sm:min-h-[58px]
+                    sm:rounded-[19px]
+
+                    md:px-4
                   "
                 >
+                  {/* INPUT */}
+
                   <input
                     type="text"
                     value={chatInput}
@@ -667,20 +1101,29 @@ const Dashboard = () => {
                     className="
                       min-w-0
                       flex-1
+
                       bg-transparent
+
                       px-1
                       py-2
-                      text-sm
+
+                      font-[system-ui]
+
+                      text-[14px]
+                      leading-6
+
                       text-[#eeeeee]
+
                       outline-none
+
                       placeholder:text-[#686868]
-                      md:text-base
+
+                      sm:text-[15px]
+                      md:text-[15px]
                     "
                   />
 
-                  {/* ==========================================
-                      SEND BUTTON
-                  ========================================== */}
+                  {/* SEND */}
 
                   <button
                     type="submit"
@@ -688,24 +1131,60 @@ const Dashboard = () => {
                     aria-label="Send message"
                     className="
                       ml-2
+
                       flex
                       h-9
                       w-9
+
                       shrink-0
+
                       items-center
                       justify-center
+
                       rounded-full
+
                       bg-[#e08d2e]
-                      text-[#181818]
-                      transition
+
+                      font-[system-ui]
+
+                      text-[#171717]
+
+                      transition-all
+                      duration-150
+
                       hover:bg-[#eea347]
+
+                      active:scale-95
+
                       disabled:cursor-not-allowed
-                      disabled:opacity-30
+                      disabled:opacity-25
                     "
                   >
-                    <ArrowUp size={18} strokeWidth={2.2} />
+                    <ArrowUp size={18} strokeWidth={2.3} />
                   </button>
                 </div>
+
+                {/* DISCLAIMER */}
+
+                <p
+                  className="
+                    mt-2
+
+                    text-center
+
+                    font-[system-ui]
+
+                    text-[10px]
+
+                    leading-4
+
+                    text-[#555555]
+
+                    sm:text-[11px]
+                  "
+                >
+                  Hermes may make mistakes. Check important information.
+                </p>
               </form>
             </div>
           </section>

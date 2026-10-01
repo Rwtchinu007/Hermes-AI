@@ -1,17 +1,151 @@
 import React, { useState } from "react";
 
 import ReactMarkdown from "react-markdown";
+
 import remarkGfm from "remark-gfm";
+
 import remarkMath from "remark-math";
+
 import rehypeKatex from "rehype-katex";
 
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-
 import { Copy, Check } from "lucide-react";
 
 import "katex/dist/katex.min.css";
+
+/* =========================================================
+   HERMES DARK SYNTAX THEME
+========================================================= */
+
+const hermesDark = {
+  "code[class*='language-']": {
+    color: "#e5e5e5",
+    background: "transparent",
+  },
+
+  "pre[class*='language-']": {
+    color: "#e5e5e5",
+    background: "transparent",
+  },
+
+  comment: {
+    color: "#666666",
+  },
+
+  prolog: {
+    color: "#666666",
+  },
+
+  doctype: {
+    color: "#666666",
+  },
+
+  cdata: {
+    color: "#666666",
+  },
+
+  punctuation: {
+    color: "#b8b8b8",
+  },
+
+  property: {
+    color: "#b9a7ff",
+  },
+
+  tag: {
+    color: "#b9a7ff",
+  },
+
+  boolean: {
+    color: "#c7a8ff",
+  },
+
+  number: {
+    color: "#c7a8ff",
+  },
+
+  constant: {
+    color: "#c7a8ff",
+  },
+
+  symbol: {
+    color: "#c7a8ff",
+  },
+
+  selector: {
+    color: "#9be28f",
+  },
+
+  "attr-name": {
+    color: "#b9a7ff",
+  },
+
+  string: {
+    color: "#9be28f",
+  },
+
+  char: {
+    color: "#9be28f",
+  },
+
+  builtin: {
+    color: "#f0b878",
+  },
+
+  inserted: {
+    color: "#9be28f",
+  },
+
+  operator: {
+    color: "#d6d6d6",
+  },
+
+  entity: {
+    color: "#c7a8ff",
+  },
+
+  url: {
+    color: "#8ab4f8",
+  },
+
+  variable: {
+    color: "#f0b878",
+  },
+
+  atrule: {
+    color: "#c7a8ff",
+  },
+
+  "attr-value": {
+    color: "#9be28f",
+  },
+
+  keyword: {
+    color: "#c7a8ff",
+  },
+
+  function: {
+    color: "#d2b5ff",
+  },
+
+  "class-name": {
+    color: "#f0b878",
+  },
+
+  regex: {
+    color: "#e6a878",
+  },
+
+  important: {
+    color: "#ff8c8c",
+    fontWeight: "600",
+  },
+};
+
+/* =========================================================
+   MARKDOWN RENDERER
+========================================================= */
 
 const MarkdownRenderer = ({ content }) => {
   return (
@@ -32,11 +166,10 @@ const MarkdownRenderer = ({ content }) => {
 
             overflow: hidden;
 
-            border: 1px solid #3a3a3a;
+            border: 1px solid #292929;
+            border-radius: 10px;
 
-            border-radius: 14px;
-
-            background: #2f2f2f;
+            background: #0b0b0b;
 
             box-sizing: border-box;
           }
@@ -55,14 +188,13 @@ const MarkdownRenderer = ({ content }) => {
             height: 44px;
 
             align-items: center;
-
             justify-content: space-between;
 
             padding: 0 12px 0 14px;
 
-            background: #2f2f2f;
+            background: #111111;
 
-            border-bottom: 1px solid #414141;
+            border-bottom: 1px solid #292929;
 
             box-sizing: border-box;
           }
@@ -77,7 +209,7 @@ const MarkdownRenderer = ({ content }) => {
 
             overflow: hidden;
 
-            color: #b8b8b8;
+            color: #888888;
 
             font-size: 12px;
 
@@ -90,7 +222,7 @@ const MarkdownRenderer = ({ content }) => {
 
 
           /* =====================================================
-             CODE COPY BUTTON
+             COPY BUTTON
           ====================================================== */
 
           .hermes-code-copy {
@@ -110,7 +242,7 @@ const MarkdownRenderer = ({ content }) => {
 
             background: transparent;
 
-            color: #b8b8b8;
+            color: #888888;
 
             font-size: 12px;
 
@@ -123,7 +255,7 @@ const MarkdownRenderer = ({ content }) => {
 
 
           .hermes-code-copy:hover {
-            background: #414141;
+            background: #1d1d1d;
 
             color: #eeeeee;
           }
@@ -143,25 +275,16 @@ const MarkdownRenderer = ({ content }) => {
             max-width: 100%;
             min-width: 0;
 
-            /*
-             * Maximum height before vertical scrolling.
-             */
             max-height: 560px;
 
-            /*
-             * Horizontal + vertical scrolling.
-             */
             overflow-x: auto;
             overflow-y: auto;
 
-            /*
-             * Better scrolling on mobile.
-             */
             -webkit-overflow-scrolling: touch;
 
             scrollbar-width: thin;
 
-            scrollbar-color: #555555 transparent;
+            scrollbar-color: #444444 transparent;
 
             box-sizing: border-box;
           }
@@ -173,7 +296,6 @@ const MarkdownRenderer = ({ content }) => {
 
           .hermes-code-scroll::-webkit-scrollbar {
             width: 7px;
-
             height: 7px;
           }
 
@@ -184,14 +306,14 @@ const MarkdownRenderer = ({ content }) => {
 
 
           .hermes-code-scroll::-webkit-scrollbar-thumb {
-            background: #555555;
+            background: #444444;
 
             border-radius: 999px;
           }
 
 
           .hermes-code-scroll::-webkit-scrollbar-thumb:hover {
-            background: #707070;
+            background: #5a5a5a;
           }
 
 
@@ -207,21 +329,12 @@ const MarkdownRenderer = ({ content }) => {
           .hermes-code-scroll pre {
             width: max-content !important;
 
-            /*
-             * Short code fills the available width.
-             */
             min-width: 100% !important;
 
-            /*
-             * Long lines are allowed to become wider.
-             */
             max-width: none !important;
 
             margin: 0 !important;
 
-            /*
-             * NEVER wrap code lines.
-             */
             white-space: pre !important;
 
             overflow: visible !important;
@@ -244,55 +357,36 @@ const MarkdownRenderer = ({ content }) => {
 
 
           /* =====================================================
-             KATEX / MATH
+             INLINE CODE
           ====================================================== */
 
-          .katex {
-            font-size: 1.05em;
-          }
+          .hermes-inline-code {
+            padding: 2px 6px;
 
+            border: 1px solid #303030;
 
-          .katex-display {
-            max-width: 100%;
+            border-radius: 5px;
 
-            margin: 1rem 0;
+            background: #1a1a1a;
 
-            padding: 4px 0;
+            color: #e2b06b;
 
-            overflow-x: auto;
+            font-family:
+              ui-monospace,
+              SFMono-Regular,
+              Menlo,
+              Monaco,
+              Consolas,
+              "Liberation Mono",
+              "Courier New",
+              monospace;
 
-            overflow-y: hidden;
-
-            scrollbar-width: thin;
-
-            scrollbar-color: #3a3a3a transparent;
-          }
-
-
-          .katex-display::-webkit-scrollbar {
-            height: 5px;
-          }
-
-
-          .katex-display::-webkit-scrollbar-track {
-            background: transparent;
-          }
-
-
-          .katex-display::-webkit-scrollbar-thumb {
-            background: #3a3a3a;
-
-            border-radius: 999px;
-          }
-
-
-          .katex-display::-webkit-scrollbar-thumb:hover {
-            background: #555555;
+            font-size: 0.9em;
           }
 
 
           /* =====================================================
-             RESPONSIVE MARKDOWN TABLE
+             TABLE
           ====================================================== */
 
           .markdown-table-scroll {
@@ -300,23 +394,16 @@ const MarkdownRenderer = ({ content }) => {
             max-width: 100%;
             min-width: 0;
 
-            margin: 16px 0;
+            margin: 18px 0;
 
-            /*
-             * IMPORTANT:
-             * Only the table scrolls horizontally.
-             */
             overflow-x: auto;
 
             overflow-y: hidden;
 
-            border: 1px solid #303030;
+            border: 1px solid #292929;
 
-            border-radius: 12px;
+            border-radius: 10px;
 
-            /*
-             * Better mobile scrolling.
-             */
             -webkit-overflow-scrolling: touch;
 
             scrollbar-width: thin;
@@ -358,17 +445,8 @@ const MarkdownRenderer = ({ content }) => {
           ====================================================== */
 
           .markdown-table-scroll table {
-            /*
-             * DO NOT use width: 100%.
-             *
-             * That causes the table to squeeze itself
-             * on mobile.
-             */
             width: max-content !important;
 
-            /*
-             * Minimum readable width.
-             */
             min-width: 720px;
 
             max-width: none;
@@ -386,19 +464,19 @@ const MarkdownRenderer = ({ content }) => {
           .markdown-table-scroll th {
             min-width: 120px;
 
-            padding: 14px 16px;
+            padding: 13px 16px;
 
             text-align: left;
 
             vertical-align: middle;
 
-            background: #242424;
+            background: #181818;
 
-            border-bottom: 1px solid #3a3a3a;
+            border-bottom: 1px solid #333333;
 
-            color: #dddddd;
+            color: #eeeeee;
 
-            font-size: 15px;
+            font-size: 14px;
 
             font-weight: 600;
 
@@ -413,24 +491,24 @@ const MarkdownRenderer = ({ content }) => {
           .markdown-table-scroll td {
             min-width: 120px;
 
-            padding: 14px 16px;
+            padding: 13px 16px;
 
             vertical-align: top;
 
-            background: #181818;
+            background: #101010;
 
-            border-bottom: 1px solid #303030;
+            border-bottom: 1px solid #272727;
 
-            color: #cccccc;
+            color: #c8c8c8;
 
-            font-size: 15px;
+            font-size: 14px;
 
             line-height: 1.6;
           }
 
 
           /* =====================================================
-             LAST ROW
+             LAST TABLE ROW
           ====================================================== */
 
           .markdown-table-scroll tr:last-child td {
@@ -443,23 +521,19 @@ const MarkdownRenderer = ({ content }) => {
           ====================================================== */
 
           .markdown-table-scroll code {
-            /*
-             * IMPORTANT:
-             * Keep O(log n), O(n^2), etc. together.
-             */
             white-space: nowrap !important;
 
             word-break: normal !important;
 
             overflow-wrap: normal !important;
 
-            border-radius: 6px;
+            border-radius: 5px;
 
-            background: #292929;
+            background: #1d1d1d;
 
-            border: 1px solid #353535;
+            border: 1px solid #303030;
 
-            padding: 2px 7px;
+            padding: 2px 6px;
 
             font-family:
               ui-monospace,
@@ -476,74 +550,56 @@ const MarkdownRenderer = ({ content }) => {
 
 
           /* =====================================================
-             MOBILE TABLE
+             KATEX
           ====================================================== */
 
-          @media (max-width: 640px) {
-
-            .markdown-table-scroll {
-              margin: 14px 0;
-
-              border-radius: 10px;
-            }
+          .katex {
+            font-size: 1.05em;
+            color: #d8d8d8;
+          }
 
 
-            .markdown-table-scroll table {
-              /*
-               * The table stays readable.
-               *
-               * User swipes horizontally.
-               */
-              min-width: 680px;
-            }
+          .katex-display {
+            max-width: 100%;
+
+            margin: 1rem 0;
+
+            padding: 4px 0;
+
+            overflow-x: auto;
+
+            overflow-y: hidden;
+
+            scrollbar-width: thin;
+
+            scrollbar-color: #303030 transparent;
+          }
 
 
-            .markdown-table-scroll th {
-              padding: 12px 14px;
-
-              font-size: 13px;
-
-              line-height: 1.4;
-            }
+          .katex-display::-webkit-scrollbar {
+            height: 5px;
+          }
 
 
-            .markdown-table-scroll td {
-              padding: 12px 14px;
-
-              font-size: 13px;
-
-              line-height: 1.5;
-            }
+          .katex-display::-webkit-scrollbar-track {
+            background: transparent;
+          }
 
 
-            .markdown-table-scroll::-webkit-scrollbar {
-              height: 5px;
-            }
+          .katex-display::-webkit-scrollbar-thumb {
+            background: #303030;
+
+            border-radius: 999px;
+          }
+
+
+          .katex-display::-webkit-scrollbar-thumb:hover {
+            background: #484848;
           }
 
 
           /* =====================================================
-             VERY SMALL PHONES
-          ====================================================== */
-
-          @media (max-width: 380px) {
-
-            .markdown-table-scroll table {
-              min-width: 640px;
-            }
-
-
-            .markdown-table-scroll th,
-            .markdown-table-scroll td {
-              padding: 10px 12px;
-
-              font-size: 12px;
-            }
-          }
-
-
-          /* =====================================================
-             MOBILE CODE BLOCK
+             MOBILE
           ====================================================== */
 
           @media (max-width: 640px) {
@@ -551,7 +607,7 @@ const MarkdownRenderer = ({ content }) => {
             .hermes-code-block {
               margin: 16px 0;
 
-              border-radius: 12px;
+              border-radius: 9px;
             }
 
 
@@ -563,9 +619,6 @@ const MarkdownRenderer = ({ content }) => {
 
 
             .hermes-code-scroll {
-              /*
-               * Smaller height on mobile.
-               */
               max-height: 420px;
 
               overflow-x: auto;
@@ -582,9 +635,6 @@ const MarkdownRenderer = ({ content }) => {
 
 
             .hermes-code-scroll pre {
-              /*
-               * Smaller padding on mobile.
-               */
               padding: 14px !important;
 
               font-size: 13px !important;
@@ -595,8 +645,6 @@ const MarkdownRenderer = ({ content }) => {
 
             .hermes-code-copy {
               padding: 5px;
-
-              font-size: 11px;
             }
 
 
@@ -608,19 +656,45 @@ const MarkdownRenderer = ({ content }) => {
             .hermes-code-language {
               font-size: 11px;
             }
+
+
+            .markdown-table-scroll {
+              margin: 14px 0;
+
+              border-radius: 9px;
+            }
+
+
+            .markdown-table-scroll table {
+              min-width: 680px;
+            }
+
+
+            .markdown-table-scroll th {
+              padding: 12px 14px;
+
+              font-size: 13px;
+            }
+
+
+            .markdown-table-scroll td {
+              padding: 12px 14px;
+
+              font-size: 13px;
+            }
+
+
+            .markdown-table-scroll::-webkit-scrollbar {
+              height: 5px;
+            }
           }
 
 
           /* =====================================================
-             VERY SMALL PHONES
+             SMALL PHONES
           ====================================================== */
 
           @media (max-width: 380px) {
-
-            .hermes-code-block {
-              border-radius: 10px;
-            }
-
 
             .hermes-code-scroll {
               max-height: 360px;
@@ -632,14 +706,23 @@ const MarkdownRenderer = ({ content }) => {
 
               font-size: 12px !important;
             }
+
+
+            .markdown-table-scroll table {
+              min-width: 640px;
+            }
+
+
+            .markdown-table-scroll th,
+            .markdown-table-scroll td {
+              padding: 10px 12px;
+
+              font-size: 12px;
+            }
           }
 
         `}
       </style>
-
-      {/* =====================================================
-          REACT MARKDOWN
-      ====================================================== */}
 
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
@@ -650,7 +733,19 @@ const MarkdownRenderer = ({ content }) => {
           ================================================= */
 
           p: ({ children }) => (
-            <p className="mb-4 leading-7 last:mb-0">{children}</p>
+            <p
+              className="
+                mb-4
+                font-[system-ui]
+                text-[15px]
+                leading-7
+                text-[#d1d1d1]
+
+                last:mb-0
+              "
+            >
+              {children}
+            </p>
           ),
 
           /* =================================================
@@ -658,25 +753,83 @@ const MarkdownRenderer = ({ content }) => {
           ================================================= */
 
           h1: ({ children }) => (
-            <h1 className="mt-6 mb-4 text-2xl font-bold first:mt-0">
+            <h1
+              className="
+                mt-7
+                mb-4
+
+                font-[system-ui]
+                text-[25px]
+                font-semibold
+                leading-tight
+                tracking-[-0.02em]
+
+                text-[#f2f2f2]
+
+                first:mt-0
+              "
+            >
               {children}
             </h1>
           ),
 
           h2: ({ children }) => (
-            <h2 className="mt-6 mb-3 text-xl font-semibold first:mt-0">
+            <h2
+              className="
+                mt-7
+                mb-3
+
+                font-[system-ui]
+                text-[21px]
+                font-semibold
+                leading-tight
+                tracking-[-0.015em]
+
+                text-[#eeeeee]
+
+                first:mt-0
+              "
+            >
               {children}
             </h2>
           ),
 
           h3: ({ children }) => (
-            <h3 className="mt-5 mb-2 text-lg font-semibold first:mt-0">
+            <h3
+              className="
+                mt-6
+                mb-2.5
+
+                font-[system-ui]
+                text-[18px]
+                font-semibold
+                leading-snug
+
+                text-[#e8e8e8]
+
+                first:mt-0
+              "
+            >
               {children}
             </h3>
           ),
 
           h4: ({ children }) => (
-            <h4 className="mt-4 mb-2 text-base font-semibold">{children}</h4>
+            <h4
+              className="
+                mt-5
+                mb-2
+
+                font-[system-ui]
+                text-[16px]
+                font-semibold
+                leading-snug
+
+                text-[#dddddd]
+              "
+            >
+              {children}
+            </h4>
           ),
 
           /* =================================================
@@ -684,17 +837,51 @@ const MarkdownRenderer = ({ content }) => {
           ================================================= */
 
           strong: ({ children }) => (
-            <strong className="font-semibold">{children}</strong>
+            <strong
+              className="
+                font-semibold
+                text-[#eeeeee]
+              "
+            >
+              {children}
+            </strong>
           ),
 
-          em: ({ children }) => <em className="italic">{children}</em>,
+          em: ({ children }) => (
+            <em
+              className="
+                italic
+                text-[#cfcfcf]
+              "
+            >
+              {children}
+            </em>
+          ),
 
           /* =================================================
              UNORDERED LIST
           ================================================= */
 
           ul: ({ children }) => (
-            <ul className="mb-4 ml-5 list-disc space-y-1 pl-2">{children}</ul>
+            <ul
+              className="
+                mb-5
+                ml-5
+                list-disc
+                space-y-1.5
+                pl-2
+
+                font-[system-ui]
+                text-[15px]
+                leading-7
+
+                text-[#d1d1d1]
+
+                marker:text-[#e08d2e]
+              "
+            >
+              {children}
+            </ul>
           ),
 
           /* =================================================
@@ -702,7 +889,24 @@ const MarkdownRenderer = ({ content }) => {
           ================================================= */
 
           ol: ({ children }) => (
-            <ol className="mb-4 ml-5 list-decimal space-y-1 pl-2">
+            <ol
+              className="
+                mb-5
+                ml-5
+                list-decimal
+                space-y-1.5
+                pl-2
+
+                font-[system-ui]
+                text-[15px]
+                leading-7
+
+                text-[#d1d1d1]
+
+                marker:font-medium
+                marker:text-[#e08d2e]
+              "
+            >
               {children}
             </ol>
           ),
@@ -711,7 +915,17 @@ const MarkdownRenderer = ({ content }) => {
              LIST ITEM
           ================================================= */
 
-          li: ({ children }) => <li className="pl-1 leading-7">{children}</li>,
+          li: ({ children }) => (
+            <li
+              className="
+                pl-1
+                leading-7
+                text-[#d1d1d1]
+              "
+            >
+              {children}
+            </li>
+          ),
 
           /* =================================================
              CODE
@@ -722,32 +936,17 @@ const MarkdownRenderer = ({ content }) => {
 
             const code = String(children).replace(/\n$/, "");
 
-            /*
-             * INLINE CODE
-             */
+            /* -----------------------------------------------
+               INLINE CODE
+            ------------------------------------------------ */
 
             if (!match) {
-              return (
-                <code
-                  className="
-                    rounded-md
-                    border
-                    border-[#303030]
-                    bg-[#242424]
-                    px-1.5
-                    py-0.5
-                    font-mono
-                    text-[0.9em]
-                  "
-                >
-                  {children}
-                </code>
-              );
+              return <code className="hermes-inline-code">{children}</code>;
             }
 
-            /*
-             * CODE BLOCK
-             */
+            /* -----------------------------------------------
+               CODE BLOCK
+            ------------------------------------------------ */
 
             return <CodeBlock language={match[1]} code={code} />;
           },
@@ -757,7 +956,7 @@ const MarkdownRenderer = ({ content }) => {
           ================================================= */
 
           pre: ({ children }) => (
-            <div className="my-4 min-w-0 max-w-full">{children}</div>
+            <div className="my-5 min-w-0 max-w-full">{children}</div>
           ),
 
           /* =================================================
@@ -767,12 +966,22 @@ const MarkdownRenderer = ({ content }) => {
           blockquote: ({ children }) => (
             <blockquote
               className="
-                my-4
-                border-l-4
-                border-[#555555]
+                my-5
+
+                border-l-2
+                border-[#e08d2e]
+
                 pl-4
+
+                font-[system-ui]
+                text-[15px]
+                leading-7
+
+                text-[#a9a9a9]
+
                 italic
-                opacity-80
+
+                [&>p]:mb-0
               "
             >
               {children}
@@ -790,10 +999,18 @@ const MarkdownRenderer = ({ content }) => {
               rel="noopener noreferrer"
               className="
                 font-medium
+
+                text-[#e09a4a]
+
                 underline
-                underline-offset-2
-                transition
-                hover:opacity-70
+                decoration-[#e08d2e55]
+                underline-offset-4
+
+                transition-colors
+                duration-150
+
+                hover:text-[#f0a044]
+                hover:decoration-[#e08d2e]
               "
             >
               {children}
@@ -804,7 +1021,16 @@ const MarkdownRenderer = ({ content }) => {
              HORIZONTAL RULE
           ================================================= */
 
-          hr: () => <hr className="my-6 border-[#303030]" />,
+          hr: () => (
+            <hr
+              className="
+                my-7
+                border-0
+                border-t
+                border-[#292929]
+              "
+            />
+          ),
 
           /* =================================================
              TABLE
@@ -829,6 +1055,12 @@ const MarkdownRenderer = ({ content }) => {
           tbody: ({ children }) => <tbody>{children}</tbody>,
 
           /* =================================================
+             TABLE ROW
+          ================================================= */
+
+          tr: ({ children }) => <tr>{children}</tr>,
+
+          /* =================================================
              TABLE HEADER
           ================================================= */
 
@@ -839,12 +1071,6 @@ const MarkdownRenderer = ({ content }) => {
           ================================================= */
 
           td: ({ children }) => <td>{children}</td>,
-
-          /* =================================================
-             TABLE ROW
-          ================================================= */
-
-          tr: ({ children }) => <tr>{children}</tr>,
         }}
       >
         {content}
@@ -854,14 +1080,14 @@ const MarkdownRenderer = ({ content }) => {
 };
 
 /* =========================================================
-   CODE BLOCK COMPONENT
+   CODE BLOCK
 ========================================================= */
 
 const CodeBlock = ({ language, code }) => {
   const [copied, setCopied] = useState(false);
 
   /* =======================================================
-     COPY CODE
+     COPY
   ======================================================= */
 
   const handleCopy = async () => {
@@ -881,19 +1107,15 @@ const CodeBlock = ({ language, code }) => {
   return (
     <div className="hermes-code-block">
       {/* =================================================
-          CODE HEADER
+          HEADER
       ================================================= */}
 
       <div className="hermes-code-header">
-        {/* Language */}
-
         <span className="hermes-code-language">
           {language
             ? language.charAt(0).toUpperCase() + language.slice(1)
             : "Code"}
         </span>
-
-        {/* Copy */}
 
         <button
           type="button"
@@ -903,7 +1125,7 @@ const CodeBlock = ({ language, code }) => {
         >
           {copied ? (
             <>
-              <Check size={15} strokeWidth={2} className="text-[#e08d2e]" />
+              <Check size={15} strokeWidth={2} className="text-[#9be28f]" />
 
               <span>Copied</span>
             </>
@@ -918,29 +1140,20 @@ const CodeBlock = ({ language, code }) => {
       </div>
 
       {/* =================================================
-          CODE CONTENT
+          CODE
       ================================================= */}
 
       <div className="hermes-code-scroll">
         <SyntaxHighlighter
           language={language || "text"}
-          /*
-           * Keep syntax highlighting.
-           */
-          style={oneDark}
-          /*
-           * Never wrap long lines.
-           */
+          style={hermesDark}
           wrapLongLines={false}
           customStyle={{
             margin: 0,
 
             padding: "18px",
 
-            /*
-             * ChatGPT-style dark code background.
-             */
-            background: "#2f2f2f",
+            background: "#0b0b0b",
 
             fontSize: "14px",
 
@@ -949,18 +1162,12 @@ const CodeBlock = ({ language, code }) => {
             fontFamily:
               "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
 
-            /*
-             * Keep long lines intact.
-             */
             whiteSpace: "pre",
 
             wordBreak: "normal",
 
             overflowWrap: "normal",
 
-            /*
-             * Parent handles scrolling.
-             */
             overflow: "visible",
 
             width: "max-content",
