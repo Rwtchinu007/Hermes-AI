@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // from backend/src -> backend -> hermes.ai -> frontend/dist
-const frontendPath = path.join(__dirname, "../../frontend/dist");
+const frontendPath = path.join(__dirname, "../../Frontend/dist");
 
 // Middleware
 app.use(express.json());
