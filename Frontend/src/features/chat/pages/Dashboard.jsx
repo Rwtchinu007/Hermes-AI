@@ -184,7 +184,7 @@ const Dashboard = () => {
           .hermes-empty-state {
             transition:
               opacity 420ms ease,
-              transform 750ms cubic-bezier(0.22, 1, 0.36, 1);
+              transform 550ms cubic-bezier(0.22, 1, 0.36, 1);
           }
 
           .hermes-empty-state.chat-started {
@@ -199,7 +199,7 @@ const Dashboard = () => {
 
           .hermes-chat-content {
             transition:
-              transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+              transform 600ms cubic-bezier(0.22, 1, 0.36, 1),
               opacity 350ms ease;
           }
 

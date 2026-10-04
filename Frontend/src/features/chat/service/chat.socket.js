@@ -9,7 +9,11 @@ export const initializeSocketConnection = () => {
     return socket;
   }
 
-  socket = io("http://localhost:3000", {
+  const socketURL = import.meta.env.DEV
+    ? "http://localhost:3000"
+    : window.location.origin;
+
+  socket = io(socketURL, {
     withCredentials: true,
   });
 

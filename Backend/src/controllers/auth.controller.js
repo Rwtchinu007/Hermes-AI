@@ -314,7 +314,7 @@ export async function registerUser(req, res) {
       <div class="button-container">
 
         <a
-          href="http://localhost:3000/api/auth/verify-email?token=${emailVerificationToken}"
+          href="/api/auth/verify-email?token=${emailVerificationToken}"
           class="button"
         >
           Verify Email →
@@ -746,7 +746,7 @@ export async function verifyEmail(req, res) {
     <div class="button-wrapper">
 
       <a
-        href="http://localhost:5173/login"
+        href="/login"
         class="button"
       >
         Continue to Login →
