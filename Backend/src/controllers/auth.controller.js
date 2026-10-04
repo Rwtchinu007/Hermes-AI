@@ -313,12 +313,12 @@ export async function registerUser(req, res) {
 
       <div class="button-container">
 
-        <a
-          href="/api/auth/verify-email?token=${emailVerificationToken}"
-          class="button"
-        >
-          Verify Email →
-        </a>
+      <a
+  href="${process.env.FRONTEND_URL}/api/auth/verify-email?token=${emailVerificationToken}"
+  class="button"
+>
+  Verify Email →
+</a>
 
       </div>
 
