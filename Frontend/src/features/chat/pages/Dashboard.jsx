@@ -268,6 +268,31 @@ const Dashboard = () => {
           }
 
           /* ==========================================
+             MOBILE COMPOSER FIX
+          ========================================== */
+
+          .hermes-mobile-composer {
+            position: absolute;
+          }
+
+          @media (max-width: 767px) {
+            .hermes-mobile-composer {
+              position: fixed !important;
+
+              left: 0;
+              right: 0;
+              bottom: 0;
+
+              z-index: 30;
+
+              padding-bottom: max(
+                12px,
+                env(safe-area-inset-bottom)
+              );
+            }
+          }
+
+          /* ==========================================
              REDUCE MOTION
           ========================================== */
 
@@ -289,14 +314,15 @@ const Dashboard = () => {
 
       <main
         className="
-          min-h-screen
+          min-h-[100dvh]
           w-full
+          overflow-hidden
           bg-[#181818]
           text-[#eeeeee]
           font-[system-ui]
         "
       >
-        <div className="flex h-screen w-full overflow-hidden">
+        <div className="flex h-[100dvh] w-full overflow-hidden">
           {/* ==========================================
               MOBILE SIDEBAR OVERLAY
           ========================================== */}
@@ -621,7 +647,6 @@ const Dashboard = () => {
                   shadow-[0_4px_18px_rgba(0,0,0,0.16)]
 
                   transition
-                  
 
                   hover:border-[#e08d2e7d]
                   hover:bg-[#1b1a19]
@@ -945,43 +970,43 @@ const Dashboard = () => {
                         {message.role === "user" ? (
                           <div
                             className="
-                                flex
-                                w-full
-                                justify-end
-                              "
+                              flex
+                              w-full
+                              justify-end
+                            "
                           >
                             <div
                               className="
-                                  hermes-user-message
+                                hermes-user-message
 
-                                  max-w-[88%]
+                                max-w-[88%]
 
-                                  rounded-2xl
-                                  rounded-br-md
+                                rounded-2xl
+                                rounded-br-md
 
-                                  bg-[#292929]
+                                bg-[#292929]
 
-                                  px-4
-                                  py-3
+                                px-4
+                                py-3
 
-                                  font-[system-ui]
+                                font-[system-ui]
 
-                                  text-[14px]
-                                  leading-6
+                                text-[14px]
+                                leading-6
 
-                                  text-[#eeeeee]
+                                text-[#eeeeee]
 
-                                  sm:max-w-[78%]
+                                sm:max-w-[78%]
 
-                                  md:max-w-[70%]
-                                  md:text-[15px]
-                                "
+                                md:max-w-[70%]
+                                md:text-[15px]
+                              "
                             >
                               <p
                                 className="
-                                    whitespace-pre-wrap
-                                    break-words
-                                  "
+                                  whitespace-pre-wrap
+                                  break-words
+                                "
                               >
                                 {message.content}
                               </p>
@@ -994,21 +1019,21 @@ const Dashboard = () => {
 
                           <div
                             className="
-                                hermes-ai-message
+                              hermes-ai-message
 
-                                w-full
+                              w-full
 
-                                max-w-[720px]
+                              max-w-[720px]
 
-                                font-[system-ui]
+                              font-[system-ui]
 
-                                text-[14px]
-                                leading-7
+                              text-[14px]
+                              leading-7
 
-                                text-[#d4d4d4]
+                              text-[#d4d4d4]
 
-                                sm:text-[15px]
-                              "
+                              sm:text-[15px]
+                            "
                           >
                             <MarkdownRenderer content={message.content} />
                           </div>
@@ -1026,6 +1051,8 @@ const Dashboard = () => {
 
             <div
               className="
+                hermes-mobile-composer
+
                 pointer-events-none
 
                 absolute
