@@ -170,8 +170,8 @@ Hermes AI/
 ### 1. Install
 
 ```bash
-git clone <your-repo-url>
-cd "Hermes AI"
+git clone https://github.com/Rwtchinu007/Hermes-AI.git
+cd Hermes-AI
 npm install --prefix Backend
 npm install --prefix Frontend
 ```
