@@ -34,3 +34,23 @@ export const deleteChat = async (chatId) => {
 
   return response.data;
 };
+
+export const renameChat = async (chatId, title) => {
+  const response = await api.patch(`/api/chats/${chatId}`, { title });
+  return response.data;
+};
+
+export const regenerateResponse = async ({ chatId, socketId }) => {
+  const response = await api.post(`/api/chats/${chatId}/regenerate`, {
+    socketId,
+  });
+  return response.data;
+};
+
+export const setMessageFeedback = async ({ chatId, messageId, feedback }) => {
+  const response = await api.patch(
+    `/api/chats/${chatId}/messages/${messageId}/feedback`,
+    { feedback },
+  );
+  return response.data;
+};

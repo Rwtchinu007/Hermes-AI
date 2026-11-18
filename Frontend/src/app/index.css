@@ -1,13 +1,897 @@
 @import "tailwindcss";
 
+/* =========================================================
+   THEME TOKENS
+   Light is the default; [data-theme="dark"] overrides.
+   The theme attribute is set before first paint in index.html.
+========================================================= */
+
+/* Warm, calm palette. Accent (terracotta) is used sparingly:
+   logo, send button, focus ring, active states. */
+:root {
+  /* Warm light theme: cream with a touch of yellow/orange (no pure white) */
+  --bg: #f8f1e5;
+  /* Companion color for light mode: dusty blue (highlights, outlines) */
+  --blue: #4d6a8a;
+  --blue-soft: rgba(77, 106, 138, 0.14);
+  --blue-line: rgba(77, 106, 138, 0.22);
+  --blue-shadow: 0 1px 2px rgba(77, 106, 138, 0.1), 0 2px 8px -2px rgba(77, 106, 138, 0.14);
+  --bg-sidebar: #f1e7d4; /* warm amber-cream */
+  --sidebar-edge: rgba(48, 34, 16, 0.16);
+  --sidebar-edge-shadow: 1px 0 10px rgba(80, 52, 18, 0.06);
+  --surface: #fdf8ef;
+  --surface-2: rgba(120, 78, 24, 0.07); /* hover: warm */
+  --surface-3: rgba(120, 78, 24, 0.12); /* active: warm */
+  --fg: #2b2a26;
+  --fg-muted: #66645d;
+  --fg-subtle: #8e8c84;
+  --line: rgba(0, 0, 0, 0.08);
+  --line-strong: rgba(0, 0, 0, 0.14);
+  --accent: #c15f3c;
+  --accent-soft: rgba(193, 95, 60, 0.1);
+  --on-accent: #ffffff;
+  --control-border: rgba(0, 0, 0, 0.1);
+  --control-border-strong: rgba(0, 0, 0, 0.18);
+  --control-hover: #f5ecdc;
+  /* User bubble: warm sand that matches the cream theme */
+  --bubble: #f1e3cb;
+  --bubble-border: rgba(140, 92, 30, 0.16);
+  --bubble-shadow: 0 1px 2px rgba(110, 70, 20, 0.06), 0 3px 10px -4px rgba(110, 70, 20, 0.14);
+  --danger: #b4321f;
+  --danger-soft: rgba(180, 50, 31, 0.07);
+  --success: #3d7a4f;
+  --overlay: rgba(31, 30, 29, 0.28);
+  --shadow-sm: 0 1px 2px rgba(31, 30, 29, 0.04);
+  --shadow-md: 0 1px 2px rgba(31, 30, 29, 0.03), 0 4px 18px rgba(31, 30, 29, 0.05);
+  --shadow-lg: 0 12px 40px rgba(31, 30, 29, 0.12), 0 2px 6px rgba(31, 30, 29, 0.05);
+
+  /* Code */
+  --code-bg: #f1e8d8;
+  --code-header: #e9dec9;
+  --code-fg: #2b2a27;
+  --code-comment: #8e8c84;
+  --code-punct: #5f5d57;
+  --code-keyword: #8a3ea8;
+  --code-string: #3d7a4f;
+  --code-number: #a5521f;
+  --code-func: #2f5f9e;
+  --code-class: #a5521f;
+  --code-tag: #2f5f9e;
+  --code-builtin: #a5521f;
+  --inline-code-bg: rgba(31, 30, 29, 0.06);
+  --inline-code-fg: #a14a2c;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Headings: a distinct geometric sans; body stays Inter */
+  --font-display: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Wordmark only */
+  --font-brand: "Sora", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, "Liberation Mono", monospace;
+
+  /* Radius scale: 8 / 12 / 16 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  /* Dark mode keeps its original look (blue extras switched off) */
+  --blue: var(--accent);
+  --sidebar-edge: var(--line);
+  --sidebar-edge-shadow: none;
+  --blue-line: transparent;
+  --blue-shadow: none;
+  --bg: #1c1c1b;
+  --bg-sidebar: #161615;
+  --surface: #262624;
+  --surface-2: rgba(44, 44, 42, 0.7); /* hover */
+  --surface-3: #2c2c2a; /* active */
+  --fg: #ece9e1;
+  --fg-muted: #9c9a92;
+  --fg-subtle: #7c7a73;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  --accent: #d97757;
+  --accent-soft: rgba(217, 119, 87, 0.14);
+  --on-accent: #1f1e1d;
+  --control-border: rgba(255, 255, 255, 0.1);
+  --control-border-strong: rgba(255, 255, 255, 0.18);
+  --control-hover: #2c2c2a;
+  --bubble: #262624;
+  --bubble-border: transparent;
+  --bubble-shadow: none;
+  --danger: #f08b77;
+  --danger-soft: rgba(240, 139, 119, 0.1);
+  --success: #8cc79c;
+  --overlay: rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.12), 0 4px 18px rgba(0, 0, 0, 0.16);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2);
+
+  --code-bg: #161615;
+  --code-header: #20201f;
+  --code-fg: #ece9e1;
+  --code-comment: #7c7a73;
+  --code-punct: #b5b2a9;
+  --code-keyword: #d4a6e8;
+  --code-string: #a8d4a0;
+  --code-number: #e8b48a;
+  --code-func: #9ec1ec;
+  --code-class: #e8b48a;
+  --code-tag: #9ec1ec;
+  --code-builtin: #e8b48a;
+  --inline-code-bg: rgba(255, 255, 255, 0.07);
+  --inline-code-fg: #e8a183;
+
+  color-scheme: dark;
+}
+
+/* Map tokens to Tailwind utilities: bg-bg, text-fg, border-line ... */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-sidebar: var(--bg-sidebar);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-fg: var(--fg);
+  --color-muted: var(--fg-muted);
+  --color-subtle: var(--fg-subtle);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-blue: var(--blue);
+  --color-blue-line: var(--blue-line);
+  --shadow-blue: var(--blue-shadow);
+  --color-accent-soft: var(--accent-soft);
+  --color-bubble: var(--bubble);
+  --color-bubble-border: var(--bubble-border);
+  --shadow-bubble: var(--bubble-shadow);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-overlay: var(--overlay);
+  --shadow-soft: var(--shadow-md);
+  --shadow-float: var(--shadow-lg);
+  --color-on-accent: var(--on-accent);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --font-brand: var(--font-brand);
+  --font-mono: var(--font-mono);
+}
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* =========================================================
+   BASE
+========================================================= */
+
+@font-face {
+  font-family: "Audex";
+  src: url("../assets/auth_assets/fonts/Audex-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 html,
-body {
+body,
+#root {
   height: 100%;
   width: 100%;
-  background-color: #000000;
-  color: #ffffff;
 }
-.messages::-webkit-scrollbar {
-  display: none;
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: inherit;
+}
+
+/* Text fields draw their own focus state (border/ring) */
+:focus-visible:not(input):not(textarea) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Smooth color change while switching themes (added briefly by JS) */
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition:
+    background-color 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease,
+    fill 220ms ease !important;
+}
+
+/* =========================================================
+   SCROLLBARS
+========================================================= */
+
+.hermes-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 200ms ease;
+}
+
+.hermes-scrollbar:hover,
+.hermes-scrollbar:focus-within {
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.hermes-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.hermes-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.hermes-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.hermes-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+}
+
+.hermes-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--fg-subtle);
+}
+
+/* =========================================================
+   ANIMATIONS
+========================================================= */
+
+@keyframes hermes-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hermes-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hermes-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hermes-dialog {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hermes-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes hermes-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes hermes-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-fade-up {
+  animation: hermes-fade-up 200ms ease-out both;
+}
+
+/* Copy confirmation: check pops in */
+@keyframes hermes-check-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.hermes-check {
+  animation: hermes-check-pop 220ms ease-out both;
+}
+
+/* Lightweight tooltip for icon-only buttons: <button data-tip="..."> */
+.hermes-tip {
+  position: relative;
+}
+
+.hermes-tip::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translate(-50%, 2px);
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 150ms ease-out,
+    transform 150ms ease-out;
+  z-index: 20;
+}
+
+.hermes-tip:hover::after,
+.hermes-tip:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition-delay: 300ms;
+}
+
+/* Home greeting: heading then subtitle settle in */
+.animate-greeting {
+  animation: hermes-fade-up 420ms var(--ease-out) both;
+}
+
+.animate-greeting-sub {
+  animation: hermes-fade-up 420ms var(--ease-out) 90ms both;
+}
+
+/* Staggered entrance (set --i on each item) */
+.animate-stagger {
+  /* "backwards": hidden before its turn, then frees transform for hover */
+  animation: hermes-fade-up 360ms var(--ease-out) backwards;
+  animation-delay: calc(140ms + var(--i, 0) * 50ms);
+}
+
+/* Wordmark ".ai" in the logo's amber-terracotta gradient */
+.hermes-wordmark-ai {
+  background: linear-gradient(120deg, #f7b267 0%, #f2994a 45%, #d9703f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Home logo: slow, gentle float */
+@keyframes hermes-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.hermes-float {
+  animation: hermes-float 6s ease-in-out infinite;
+}
+
+.animate-fade-in {
+  animation: hermes-fade-in 220ms ease both;
+}
+
+.animate-pop {
+  animation: hermes-pop 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-dialog {
+  animation: hermes-dialog 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Thinking indicator: three softly pulsing dots */
+.hermes-dots span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--fg-muted);
+  animation: hermes-pulse 1.2s ease-in-out infinite;
+}
+
+.hermes-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.hermes-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* Status text with a subtle moving highlight */
+.hermes-shimmer-text {
+  background: linear-gradient(
+    90deg,
+    var(--fg-muted) 0%,
+    var(--fg-muted) 40%,
+    var(--fg) 50%,
+    var(--fg-muted) 60%,
+    var(--fg-muted) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: hermes-shimmer 2s linear infinite;
+}
+
+/* Hermes mark spinning ring while generating */
+.hermes-spin {
+  animation: hermes-spin 1.1s linear infinite;
+}
+
+/* Streaming caret appended after the last block */
+.hermes-caret {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 2px;
+  border-radius: 999px;
+  background: var(--fg);
+  vertical-align: middle;
+  animation: hermes-pulse 1s ease-in-out infinite;
+}
+
+/* =========================================================
+   AUTH PAGES
+========================================================= */
+
+/* Warm light breathing behind the monitor */
+@keyframes auth-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+}
+
+.auth-glow {
+  animation: auth-glow 5s ease-in-out infinite;
+}
+
+@keyframes auth-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.auth-card {
+  animation: auth-card-in 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Gentle shake for inline errors on invalid submit */
+@keyframes hermes-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+.hermes-shake {
+  animation: hermes-shake 320ms ease-out both;
+}
+
+/* =========================================================
+   MARKDOWN (AI responses)
+========================================================= */
+
+.hermes-prose {
+  color: var(--fg);
+  font-size: 15px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.hermes-prose > :first-child {
+  margin-top: 0 !important;
+}
+
+.hermes-prose > :last-child {
+  margin-bottom: 0 !important;
+}
+
+.hermes-prose p {
+  margin: 0 0 1em;
+}
+
+.hermes-prose h1,
+.hermes-prose h2,
+.hermes-prose h3,
+.hermes-prose h4 {
+  color: var(--fg);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+}
+
+.hermes-prose h1 {
+  font-size: 1.6em;
+  margin: 1.4em 0 0.6em;
+}
+
+.hermes-prose h2 {
+  font-size: 1.3em;
+  margin: 1.4em 0 0.55em;
+}
+
+.hermes-prose h3 {
+  font-size: 1.12em;
+  margin: 1.25em 0 0.45em;
+}
+
+.hermes-prose h4 {
+  font-size: 1em;
+  margin: 1.1em 0 0.4em;
+}
+
+/* Bold terms: soft highlighter stroke underneath */
+.hermes-prose strong {
+  font-weight: 700;
+  color: var(--fg);
+  background: linear-gradient(
+    180deg,
+    transparent 62%,
+    var(--accent-soft) 62%,
+    var(--accent-soft) 92%,
+    transparent 92%
+  );
+  padding: 0 2px;
+  margin: 0 -2px;
+  border-radius: 2px;
+}
+
+.hermes-prose ul,
+.hermes-prose ol {
+  margin: 0 0 1em;
+  padding-left: 1.5em;
+}
+
+/* Bullets: small terracotta diamonds */
+.hermes-prose ul {
+  list-style: none;
+  padding-left: 1.4em;
+}
+
+.hermes-prose ul > li {
+  position: relative;
+}
+
+.hermes-prose ul > li::before {
+  content: "";
+  position: absolute;
+  left: -1.05em;
+  top: 0.72em;
+  width: 6px;
+  height: 6px;
+  border-radius: 1.5px;
+  background: var(--accent);
+  transform: rotate(45deg);
+  opacity: 0.85;
+}
+
+.hermes-prose ul ul > li::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
+.hermes-prose ol {
+  list-style: decimal;
+}
+
+.hermes-prose li {
+  margin: 0.3em 0;
+  padding-left: 0.2em;
+}
+
+/* Numbered lists: bold accent numbers */
+.hermes-prose ol > li::marker {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.hermes-prose li > p {
+  margin: 0.25em 0;
+}
+
+.hermes-prose a {
+  color: var(--fg);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 150ms ease, color 150ms ease;
+}
+
+.hermes-prose a:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+
+.hermes-prose blockquote {
+  margin: 1.2em 0;
+  padding: 0.1em 0 0.1em 1em;
+  border-left: 3px solid var(--line-strong);
+  color: var(--fg-muted);
+}
+
+.hermes-prose blockquote p {
+  margin: 0.3em 0;
+}
+
+.hermes-prose hr {
+  margin: 1.8em 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+.hermes-inline-code {
+  padding: 0.12em 0.4em;
+  border-radius: 5px;
+  background: var(--inline-code-bg);
+  color: var(--inline-code-fg);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+/* Code block */
+.hermes-code-block {
+  width: 100%;
+  min-width: 0;
+  margin: 1.2em 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--code-bg);
+}
+
+.hermes-code-header {
+  display: flex;
+  height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 0 14px;
+  background: var(--code-header);
+  border-bottom: 1px solid var(--line);
+}
+
+.hermes-code-language {
+  overflow: hidden;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hermes-code-copy {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.hermes-code-copy:hover {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+
+.hermes-code-scroll {
+  max-height: 560px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hermes-code-scroll pre {
+  width: max-content !important;
+  min-width: 100% !important;
+  margin: 0 !important;
+  white-space: pre !important;
+  overflow: visible !important;
+}
+
+.hermes-code-scroll code {
+  white-space: pre !important;
+}
+
+/* Show code exactly as typed (no => to ⇒ ligatures) */
+.hermes-code-scroll,
+.hermes-inline-code {
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}
+
+/* Table */
+.markdown-table-scroll {
+  width: 100%;
+  margin: 1.2em 0;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.markdown-table-scroll table {
+  width: 100%;
+  min-width: max-content;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.markdown-table-scroll th {
+  padding: 10px 14px;
+  text-align: left;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  color: var(--fg);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.markdown-table-scroll td {
+  padding: 10px 14px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+  color: var(--fg);
+  line-height: 1.6;
+  max-width: 420px;
+}
+
+.markdown-table-scroll tr:last-child td {
+  border-bottom: none;
+}
+
+/* KaTeX */
+.katex {
+  font-size: 1.05em;
+}
+
+.katex-display {
+  max-width: 100%;
+  margin: 1rem 0;
+  padding: 4px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+@media (max-width: 640px) {
+  .hermes-prose {
+    font-size: 15px;
+  }
+
+  .hermes-code-scroll {
+    max-height: 420px;
+  }
+
+  .hermes-code-scroll pre {
+    padding: 14px !important;
+    font-size: 12.5px !important;
+  }
+}
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .hermes-dots span,
+  .hermes-caret {
+    animation: none !important;
+    opacity: 0.7;
+  }
+
+  .hermes-shimmer-text {
+    animation: none !important;
+    color: var(--fg-muted);
+    background: none;
+  }
 }

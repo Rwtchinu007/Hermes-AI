@@ -16,6 +16,12 @@ const messageSchema = new mongoose.Schema(
       enum: ["user", "ai"], // allowed values for role
       required: true,
     },
+    // Optional user feedback on AI messages
+    feedback: {
+      type: String,
+      enum: ["like", "dislike", null],
+      default: null,
+    },
   },
   { timestamps: true },
 );

@@ -1,6 +1,6 @@
 import {Router}  from "express";
 import {registerValidator,loginValidator} from "../validators/auth.validator.js";
-import {registerUser,loginUser,getMe} from "../controllers/auth.controller.js";
+import {registerUser,loginUser,getMe,logoutUser,googleAuth,getGoogleConfig} from "../controllers/auth.controller.js";
 import {verifyEmail} from "../controllers/auth.controller.js";
 import {authUser} from "../middlewares/auth.middleware.js";
 
@@ -39,6 +39,31 @@ authRouter.get("/get-me",authUser, getMe);
  * @query { token }
  */
 authRouter.get("/verify-email",verifyEmail);
+
+
+/**
+ * @route POST /api/auth/logout
+ * @desc Clear the auth cookie
+ * @access Public
+ */
+authRouter.post("/logout", logoutUser);
+
+
+/**
+ * @route GET /api/auth/google/config
+ * @desc Public Google Sign-In client ID (if configured)
+ * @access Public
+ */
+authRouter.get("/google/config", getGoogleConfig);
+
+
+/**
+ * @route POST /api/auth/google
+ * @desc Sign in / sign up with a Google ID token
+ * @access Public
+ * @body { credential, remember }
+ */
+authRouter.post("/google", googleAuth);
 
 
 export default authRouter;

@@ -1,6 +1,58 @@
 import userModel from "../models/user.model.js";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { OAuth2Client } from "google-auth-library";
 import { sendEmail } from "../services/mail.service.js";
+import {
+  verificationEmail,
+  emailVerifiedPage,
+  verificationFailedPage,
+} from "../services/emailTemplates.js";
+
+const SESSION_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // matches JWT expiry (7d)
+
+// Google Sign-In uses its own OAuth client ID (public, not a secret)
+const getGoogleClientId = () => process.env.GOOGLE_OAUTH_CLIENT_ID || "";
+// Optional: enables the popup "code" flow (custom-styled button).
+// Never sent to the browser.
+const getGoogleClientSecret = () => process.env.GOOGLE_OAUTH_CLIENT_SECRET || "";
+
+/**
+ * Cookie options for the auth token.
+ * remember=true -> persistent cookie for 7 days; false -> session cookie.
+ */
+function authCookieOptions(remember = true) {
+  return {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    ...(remember ? { maxAge: SESSION_MAX_AGE } : {}),
+  };
+}
+
+function issueAuthToken(res, user, remember = true) {
+  const token = jwt.sign(
+    {
+      id: user._id,
+      username: user.username,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    },
+  );
+
+  res.cookie("token", token, authCookieOptions(remember));
+}
+
+const publicUser = (user) => ({
+  id: user._id,
+  username: user.username,
+  email: user.email,
+  avatar: user.avatar,
+  googleId: user.googleId ? true : undefined,
+});
 
 /**
  * @desc Register a new user
@@ -32,327 +84,29 @@ export async function registerUser(req, res) {
     process.env.JWT_SECRET,
   );
 
+  // Send the verification email. If it fails, remove the just-created
+  // account so the user can simply try again (no half-created accounts).
+  try {
   await sendEmail({
     to: email,
 
     subject: "Welcome to Hermes.ai!",
 
-    html: `
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
-
-  <style>
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      padding: 0;
-
-      background: #eeeeee;
-
-      font-family: Arial, Helvetica, sans-serif;
-      color: #ffffff;
-    }
-
-    .wrapper {
-      width: 100%;
-
-      padding: 40px 20px;
-
-      background: #eeeeee;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 560px;
-
-      margin: 0 auto;
-
-      padding: 38px 40px;
-
-      background: #202020;
-
-      border: 1px solid #3c3c3c;
-
-      border-radius: 12px;
-    }
-
-
-    /* ================= LOGO ================= */
-
-    .logo {
-      margin-bottom: 28px;
-
-      font-family: Arial, Helvetica, sans-serif;
-
-      font-size: 24px;
-      font-weight: 500;
-
-      letter-spacing: -0.5px;
-    }
-
-    .logo-main {
-      color: #e08d2e;
-    }
-
-    .logo-ai {
-      color: #9b9b9b;
-      font-weight: 400;
-    }
-
-
-    /* ================= DIVIDER ================= */
-
-    .divider {
-      width: 100%;
-      height: 1px;
-
-      background: #363636;
-
-      margin-bottom: 32px;
-    }
-
-
-    /* ================= HEADING ================= */
-
-    h1 {
-      margin: 0 0 22px;
-
-      font-size: 25px;
-      line-height: 1.3;
-
-      font-weight: 400;
-
-      letter-spacing: -0.4px;
-
-      color: #eeeeee;
-    }
-
-
-    /* ================= TEXT ================= */
-
-    p {
-      margin: 0 0 16px;
-
-      font-size: 14px;
-      line-height: 1.7;
-
-      font-weight: 300;
-
-      color: #a0a0a0;
-    }
-
-    .username {
-      color: #dddddd;
-      font-weight: 400;
-    }
-
-    .brand {
-      color: #e08d2e;
-      font-weight: 400;
-    }
-
-
-    /* ================= BUTTON ================= */
-
-    .button-container {
-      margin: 28px 0;
-    }
-
-    .button {
-      display: inline-block;
-
-      padding: 11px 22px;
-
-      background: #e08d2e;
-
-      color: #171717 !important;
-
-      text-decoration: none;
-
-      font-size: 13px;
-
-      font-weight: 500;
-
-      border-radius: 6px;
-    }
-
-
-    /* ================= FOOTER ================= */
-
-    .bottom-divider {
-      width: 100%;
-      height: 1px;
-
-      background: #363636;
-
-      margin: 30px 0 22px;
-    }
-
-    .footer {
-      margin: 0 0 12px;
-
-      font-size: 12px;
-
-      line-height: 1.6;
-
-      color: #6f6f6f;
-    }
-
-    .team {
-      color: #9a9a9a;
-
-      font-weight: 400;
-    }
-
-
-    /* ================= MOBILE ================= */
-
-    @media only screen and (max-width: 600px) {
-
-      .wrapper {
-        padding: 20px 10px;
-      }
-
-      .container {
-        padding: 30px 24px;
-      }
-
-      .logo {
-        font-size: 22px;
-      }
-
-      h1 {
-        font-size: 23px;
-      }
-
-      p {
-        font-size: 13px;
-      }
-
-    }
-
-  </style>
-
-</head>
-
-
-<body>
-
-  <div class="wrapper">
-
-    <div class="container">
-
-
-      <!-- LOGO -->
-
-      <div class="logo">
-
-        <span class="logo-main">
-          Hermes
-        </span>
-
-        <span class="logo-ai">
-          .ai
-        </span>
-
-      </div>
-
-
-      <!-- DIVIDER -->
-
-      <div class="divider"></div>
-
-
-      <!-- HEADING -->
-
-      <h1>
-        Welcome to Hermes.ai
-      </h1>
-
-
-      <!-- GREETING -->
-
-      <p>
-        Hi
-        <span class="username">
-          ${username}
-        </span>,
-      </p>
-
-
-      <!-- MESSAGE -->
-
-      <p>
-        Thank you for registering at
-        <span class="brand">
-          Hermes.ai
-        </span>.
-        We're excited to have you on board.
-      </p>
-
-
-      <p>
-        Please verify your email address to activate
-        your account and get started.
-      </p>
-
-
-      <!-- BUTTON -->
-
-      <div class="button-container">
-
-      <a
-  href="${process.env.FRONTEND_URL}/api/auth/verify-email?token=${emailVerificationToken}"
-  class="button"
->
-  Verify Email →
-</a>
-
-      </div>
-
-
-      <!-- FOOTER -->
-
-      <div class="bottom-divider"></div>
-
-
-      <p class="footer">
-        If you did not register for this account,
-        please ignore this email.
-      </p>
-
-
-      <p class="footer">
-        Best regards,<br />
-
-        <span class="team">
-          The Hermes.ai Team
-        </span>
-
-      </p>
-
-
-    </div>
-
-  </div>
-
-</body>
-
-</html>
-`,
+    html: verificationEmail({
+      username,
+      link: `${process.env.FRONTEND_URL}/api/auth/verify-email?token=${emailVerificationToken}`,
+    }),
   });
+  } catch (error) {
+    console.error("Verification email failed:", error?.response?.data || error?.message);
+    await userModel.deleteOne({ _id: user._id });
+    return res.status(503).json({
+      message:
+        "We couldn't send the verification email right now, so your account wasn't created. Please try again in a few minutes.",
+      success: false,
+      err: "Verification email failed",
+    });
+  }
 
   res.status(201).json({
     message: "User registered successfully",
@@ -399,26 +153,177 @@ export async function loginUser(req, res) {
     });
   }
 
-  const token = jwt.sign(
-    {
-      id: user._id,
-      username: user.username,
-    },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: "7d",
-    },
-  );
+  // "Remember me" defaults to true to preserve the previous 7-day session
+  const remember = req.body.remember !== false;
+  issueAuthToken(res, user, remember);
 
-  res.cookie("token", token);
   res.status(200).json({
     message: "User logged in successfully",
     success: true,
-    user: {
-      id: user._id,
-      username: user.username,
-      email: user.email,
-    },
+    user: publicUser(user),
+  });
+}
+
+/**
+ * @desc Log out: clear the auth cookie
+ * @route POST /api/auth/logout
+ * @access Public (works even if the token already expired)
+ */
+export async function logoutUser(req, res) {
+  const { maxAge, ...options } = authCookieOptions();
+  res.clearCookie("token", options);
+  res.status(200).json({
+    message: "Logged out successfully",
+    success: true,
+  });
+}
+
+/**
+ * @desc Public Google Sign-In config for the frontend
+ * @route GET /api/auth/google/config
+ * @access Public
+ */
+export async function getGoogleConfig(req, res) {
+  const clientId = getGoogleClientId();
+  res.status(200).json({
+    success: true,
+    enabled: Boolean(clientId),
+    clientId: clientId || null,
+    // "code": custom button + server-side code exchange (needs the secret)
+    // "id_token": Google's pre-built button (client ID only)
+    flow: clientId && getGoogleClientSecret() ? "code" : "id_token",
+  });
+}
+
+/**
+ * Build a unique username (3-30 chars, letters/numbers/underscore)
+ */
+async function generateUsername(base) {
+  let cleaned = String(base || "")
+    .normalize("NFKD")
+    .replace(/[^a-zA-Z0-9_]/g, "")
+    .slice(0, 20);
+  if (cleaned.length < 3) cleaned = `user${cleaned}`;
+
+  let candidate = cleaned;
+  for (let i = 0; i < 10; i++) {
+    const exists = await userModel.exists({ username: candidate });
+    if (!exists) return candidate;
+    candidate = `${cleaned}_${crypto.randomInt(1000, 99999)}`;
+  }
+  return `${cleaned}_${crypto.randomBytes(4).toString("hex")}`;
+}
+
+/**
+ * @desc Sign in / sign up with Google
+ * @route POST /api/auth/google
+ * @access Public
+ * @body { code } - one-time auth code from the GIS popup code flow, or
+ *       { credential } - Google ID token from the pre-built GIS button
+ */
+export async function googleAuth(req, res) {
+  const clientId = getGoogleClientId();
+  if (!clientId) {
+    return res.status(503).json({
+      message: "Google sign-in is not configured on this server",
+      success: false,
+      err: "GOOGLE_OAUTH_CLIENT_ID missing",
+    });
+  }
+
+  const { credential, code, remember } = req.body;
+  const hasCode = typeof code === "string" && code.length > 0;
+  const hasCredential = typeof credential === "string" && credential.length > 0;
+  if (!hasCode && !hasCredential) {
+    return res.status(400).json({
+      message: "Missing Google credential",
+      success: false,
+    });
+  }
+
+  // Never trust client-provided profile data: verify the ID token
+  let payload;
+  try {
+    let idToken = credential;
+
+    if (hasCode) {
+      const secret = getGoogleClientSecret();
+      if (!secret) {
+        return res.status(503).json({
+          message: "Google sign-in is not fully configured on this server",
+          success: false,
+          err: "GOOGLE_OAUTH_CLIENT_SECRET missing",
+        });
+      }
+      // Exchange the one-time code with Google ("postmessage" = popup flow)
+      const exchanger = new OAuth2Client(clientId, secret, "postmessage");
+      const { tokens } = await exchanger.getToken(code);
+      idToken = tokens.id_token;
+    }
+
+    const client = new OAuth2Client(clientId);
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: clientId,
+    });
+    payload = ticket.getPayload();
+  } catch (err) {
+    console.error("Google sign-in failed:", err?.response?.data || err?.message);
+    return res.status(401).json({
+      message: "Google sign-in failed. Please try again.",
+      success: false,
+      err: "Invalid Google token",
+    });
+  }
+
+  if (!payload?.email || !payload.email_verified) {
+    return res.status(401).json({
+      message: "Your Google account email is not verified",
+      success: false,
+    });
+  }
+
+  const email = payload.email.toLowerCase();
+
+  let user = await userModel.findOne({ googleId: payload.sub });
+
+  if (!user) {
+    user = await userModel.findOne({ email });
+
+    if (user) {
+      // Existing email/password account: Google has verified ownership of
+      // this email, so it's safe to link the Google identity to it.
+      if (user.googleId && user.googleId !== payload.sub) {
+        return res.status(409).json({
+          message: "This email is linked to a different Google account",
+          success: false,
+        });
+      }
+      user.googleId = payload.sub;
+      user.verified = true;
+      if (!user.avatar && payload.picture) user.avatar = payload.picture;
+      await user.save();
+    } else {
+      user = await userModel.create({
+        username: await generateUsername(
+          payload.given_name || payload.name || email.split("@")[0],
+        ),
+        email,
+        // Random password: Google accounts sign in via Google only
+        password: crypto.randomBytes(32).toString("hex"),
+        verified: true,
+        googleId: payload.sub,
+        avatar: payload.picture,
+      });
+    }
+  }
+
+  issueAuthToken(res, user, remember !== false);
+
+  res.status(200).json({
+    message: "User logged in successfully",
+    success: true,
+    user: publicUser(user),
   });
 }
 
@@ -456,326 +361,12 @@ export async function verifyEmail(req, res) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await userModel.findOne({ email: decoded.email });
     if (!user) {
-      return res.status(400).json({
-        message: "Invalid token",
-        success: false,
-        err: "User not found",
-      });
+      return res.status(400).send(verificationFailedPage());
     }
     user.verified = true;
     await user.save();
-    const html = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Email Verified | Hermes.ai</title>
-
-  <!-- Custom Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Grotesk:wght@400;500&display=swap"
-    rel="stylesheet"
-  />
-
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      min-height: 100vh;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      padding: 20px;
-
-      background: #181818;
-
-      color: #ffffff;
-
-      font-family: "Inter", Arial, sans-serif;
-      font-weight: 300;
-    }
-
-    /* Main Card */
-
-    .card {
-      width: 100%;
-      max-width: 500px;
-
-      padding: 42px 42px 34px;
-
-      background: #202020;
-
-      border: 1px solid #3a3a3a;
-      border-radius: 14px;
-
-      box-shadow:
-        0 20px 50px rgba(0, 0, 0, 0.25);
-    }
-
-    /* Logo */
-
-    .logo {
-      font-family: "Space Grotesk", sans-serif;
-
-      font-size: 25px;
-      font-weight: 400;
-
-      letter-spacing: -0.8px;
-
-      color: #e9e9e9;
-
-      margin-bottom: 35px;
-    }
-
-    .logo .hermes {
-      color: #e08d2e;
-    }
-
-    .logo .ai {
-      color: #9b9b9b;
-    }
-
-    /* Divider */
-
-    .divider {
-      width: 100%;
-      height: 1px;
-
-      background: #353535;
-
-      margin-bottom: 42px;
-    }
-
-    /* Check */
-
-    .check {
-      width: 52px;
-      height: 52px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      margin: 0 auto 25px;
-
-      border: 1px solid #8c632f;
-      border-radius: 50%;
-
-      color: #e08d2e;
-
-      font-size: 23px;
-      font-weight: 300;
-    }
-
-    /* Heading */
-
-    h1 {
-      text-align: center;
-
-      font-family: "Inter", sans-serif;
-
-      font-size: 28px;
-      font-weight: 300;
-
-      letter-spacing: -0.8px;
-
-      color: #eeeeee;
-
-      margin-bottom: 18px;
-    }
-
-    /* Message */
-
-    .message {
-      max-width: 320px;
-
-      margin: 0 auto;
-
-      text-align: center;
-
-      font-size: 14px;
-      font-weight: 300;
-
-      line-height: 1.8;
-
-      color: #929292;
-    }
-
-    .username {
-      color: #d7d7d7;
-      font-weight: 400;
-    }
-
-    /* Button */
-
-    .button-wrapper {
-      text-align: center;
-
-      margin-top: 30px;
-    }
-
-    .button {
-      display: inline-block;
-
-      padding: 12px 25px;
-
-      background: #e08d2e;
-
-      color: #171717;
-
-      border-radius: 6px;
-
-      text-decoration: none;
-
-      font-family: "Inter", sans-serif;
-
-      font-size: 13px;
-      font-weight: 400;
-
-      transition: opacity 0.2s ease;
-    }
-
-    .button:hover {
-      opacity: 0.85;
-    }
-
-    /* Bottom */
-
-    .bottom {
-      margin-top: 38px;
-      padding-top: 20px;
-
-      border-top: 1px solid #353535;
-
-      text-align: center;
-    }
-
-    .bottom-text {
-      font-family: "Space Grotesk", sans-serif;
-
-      font-size: 10px;
-      font-weight: 400;
-
-      letter-spacing: 3px;
-
-      color: #666666;
-    }
-
-    /* Mobile */
-
-    @media (max-width: 500px) {
-
-      .card {
-        padding: 35px 25px 28px;
-      }
-
-      .logo {
-        font-size: 23px;
-      }
-
-      h1 {
-        font-size: 24px;
-      }
-
-      .message {
-        font-size: 13px;
-      }
-
-      .bottom-text {
-        letter-spacing: 2px;
-      }
-    }
-
-  </style>
-</head>
-
-<body>
-
-  <div class="card">
-
-    <!-- Hermes Logo -->
-
-    <div class="logo">
-      <span class="hermes">Hermes</span><span class="ai">.ai</span>
-    </div>
-
-
-    <!-- Divider -->
-
-    <div class="divider"></div>
-
-
-    <!-- Success -->
-
-    <div class="check">
-      ✓
-    </div>
-
-
-    <!-- Heading -->
-
-    <h1>
-      Email verified
-    </h1>
-
-
-    <!-- Message -->
-
-    <p class="message">
-      Hi <span class="username">${user.username}</span>,
-      <br />
-
-      Your email has been successfully verified.
-      You can now use Hermes.ai.
-    </p>
-
-
-    <!-- Button -->
-
-    <div class="button-wrapper">
-
-      <a
-        href="/login"
-        class="button"
-      >
-        Continue to Login →
-      </a>
-
-    </div>
-
-
-    <!-- Footer -->
-
-    <div class="bottom">
-
-      <p class="bottom-text">
-        WELCOME TO HERMES.AI
-      </p>
-
-    </div>
-
-  </div>
-
-</body>
-</html>
-`;
-    return res.send(html);
+    return res.send(emailVerifiedPage({ username: user.username }));
   } catch (err) {
-    res.status(400).json({
-      message: "Invalid or expired token",
-      success: false,
-      err: err.message,
-    });
+    return res.status(400).send(verificationFailedPage());
   }
 }

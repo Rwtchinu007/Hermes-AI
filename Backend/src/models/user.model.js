@@ -24,6 +24,14 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    // Set when the account signs in with Google (optional, additive)
+    googleId:{
+        type: String,
+        index: true,
+    },
+    avatar:{
+        type: String,
+    },
 },{timestamps: true});
 
 

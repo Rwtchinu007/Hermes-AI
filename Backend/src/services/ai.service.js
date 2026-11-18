@@ -69,9 +69,14 @@ const agent = createAgent({
 // STREAMING AI RESPONSE
 // ==================================================
 
-export async function* generateResponse(messages) {
-  // console.log(messages);
-
+/**
+ * @param {Array} messages conversation history (Message documents)
+ * @param {Object} [options]
+ * @param {AbortSignal} [options.signal] cancels generation when aborted
+ * @param {(status: string) => void} [options.onStatus] called with
+ *   "searching" when the model starts a web search tool call
+ */
+export async function* generateResponse(messages, { signal, onStatus } = {}) {
   const stream = await agent.stream(
     {
       messages: [
@@ -168,6 +173,7 @@ Keep every response clean, readable, and useful.
     },
     {
       streamMode: "messages",
+      signal,
     },
   );
 
@@ -175,7 +181,13 @@ Keep every response clean, readable, and useful.
   // STREAM ONLY THE ACTUAL AI RESPONSE
   // ==================================================
 
+  let reportedSearch = false;
+
   for await (const [token, metadata] of stream) {
+    if (signal?.aborted) {
+      return;
+    }
+
     // Ignore anything that isn't an AI message chunk
     if (!isAIMessageChunk(token)) {
       continue;
@@ -184,6 +196,12 @@ Keep every response clean, readable, and useful.
     // Only accept tokens from our Gemini response model
     if (!metadata?.tags?.includes("hermes-response")) {
       continue;
+    }
+
+    // The model is calling the web search tool
+    if (!reportedSearch && token.tool_call_chunks?.length) {
+      reportedSearch = true;
+      onStatus?.("searching");
     }
 
     // Gemini normally returns text content as a string

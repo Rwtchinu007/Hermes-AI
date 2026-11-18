@@ -5,6 +5,13 @@ import Dashboard from "../features/chat/pages/Dashboard";
 import Protected from "../features/auth/components/Protected";
 import { Navigate } from "react-router";
 import VerifyEmail from "../features/auth/pages/VerifyEmail";
+
+const protectedDashboard = (
+  <Protected>
+    <Dashboard />
+  </Protected>
+);
+
 export const router = createBrowserRouter([
   {
     path: "/login",
@@ -20,14 +27,19 @@ export const router = createBrowserRouter([
   },
   {
     path: "/",
-    element: (
-      <Protected>
-        <Dashboard />
-      </Protected>
-    ),
+    element: protectedDashboard,
+  },
+  {
+    // Deep link to a conversation (survives refresh)
+    path: "/c/:chatId",
+    element: protectedDashboard,
   },
   {
     path: "/dashboard",
+    element: <Navigate to="/" replace />,
+  },
+  {
+    path: "*",
     element: <Navigate to="/" replace />,
   },
 ]);

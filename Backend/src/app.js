@@ -26,14 +26,9 @@ app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:5173", // Replace with your frontend URL
     credentials: true, // Allow cookies to be sent in cross-origin requests
-    methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed HTTP methods
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"], // Specify allowed HTTP methods
   }),
 );
-
-// // Health check
-// app.get("/", (req, res) => {
-//   res.status(200).json({ message: "Server is running" });
-// });
 
 // Routes
 app.use("/api/auth", authRouter);

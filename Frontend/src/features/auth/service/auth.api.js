@@ -16,12 +16,35 @@ export async function register({ email, password, username }) {
   return response.data;
 }
 
-export async function login({ email, password }) {
-  const response = await api.post("/api/auth/login", { email, password });
+export async function login({ email, password, remember }) {
+  const response = await api.post("/api/auth/login", {
+    email,
+    password,
+    remember,
+  });
   return response.data;
 }
 
 export async function getMe() {
   const response = await api.get("/api/auth/get-me");
+  return response.data;
+}
+
+export async function logout() {
+  const response = await api.post("/api/auth/logout");
+  return response.data;
+}
+
+export async function getGoogleConfig() {
+  const response = await api.get("/api/auth/google/config");
+  return response.data;
+}
+
+export async function googleLogin({ credential, code, remember }) {
+  const response = await api.post("/api/auth/google", {
+    credential,
+    code,
+    remember,
+  });
   return response.data;
 }
