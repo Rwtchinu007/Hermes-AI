@@ -251,7 +251,7 @@ All variables go in `Backend/.env` (template: [`Backend/.env.example`](Backend/.
 
 **Google sign-in (optional)**
 1. In [Google Cloud Console](https://console.cloud.google.com/), create an OAuth client of type **Web application**.
-2. Add your app origins (for example `http://localhost:3000` and your production URL) under **Authorized JavaScript origins**.
+2. Add your app origins under **Authorized JavaScript origins**: `http://localhost:3000` for local use and your exact production URL (for example `https://your-app.onrender.com`, with no trailing slash or path).
 3. Set `GOOGLE_OAUTH_CLIENT_ID`, and optionally `GOOGLE_OAUTH_CLIENT_SECRET`.
 4. Leave both empty to hide Google sign-in.
 
@@ -313,7 +313,7 @@ The root `package.json` is set up for hosts like Render: the build command insta
 1. Build command: `npm run build`. Start command: `npm start`.
 2. Add every variable from [section 8](#8-environment-variables) in the host's environment settings.
 3. Set `NODE_ENV=production` and `FRONTEND_URL` to your public URL.
-4. If you use Google sign-in, add your public URL to the OAuth client's authorized origins.
+4. If you use Google sign-in, add your public URL to the OAuth client's **Authorized JavaScript origins** in Google Cloud, or the Google popup fails with `Error 400: origin_mismatch`.
 
 ## 14. Troubleshooting
 
@@ -326,6 +326,7 @@ The root `package.json` is set up for hosts like Render: the build command insta
 | CORS or cookie problems in development | Make sure `FRONTEND_URL` matches the exact origin you open in the browser. |
 | AI replies fail | Check `GEMINI_API_KEY` and its quota. If a model is overloaded the app falls back to the next one in `GEMINI_MODELS`; the server log shows which models failed. |
 | Web search never returns results | Check `TAVILY_API_KEY` is set. The server log prints the Tavily error. |
+| Google popup shows "Access blocked" / `origin_mismatch` | Your site's exact URL (for example `https://your-app.onrender.com`) is missing from **Authorized JavaScript origins** on the OAuth client in Google Cloud. Add it, save, and wait a few minutes. |
 | Google button says "not configured" | Set `GOOGLE_OAUTH_CLIENT_ID` and authorize your origin in Google Cloud. |
 
 ---
