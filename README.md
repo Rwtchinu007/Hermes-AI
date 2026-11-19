@@ -74,6 +74,7 @@ Hermes.ai is a ChatGPT-style web app. A user signs up (with email or Google), ve
 **Chat**
 - Real-time streaming responses over WebSockets
 - Live web search through an AI agent, with a "searching" status while it works
+- Automatic fallback across several Gemini models if one is busy or fails
 - Stop a response mid-way, or regenerate the last answer
 - Like or dislike AI messages
 - Markdown with syntax-highlighted code blocks (Copy button), tables, task lists and LaTeX math
@@ -119,7 +120,7 @@ Hermes.ai is a ChatGPT-style web app. A user signs up (with email or Google), ve
 
 1. The user sends a message with `POST /api/chats/message`, along with their Socket.IO socket id.
 2. The server saves the message, replies `202 Accepted` immediately and runs the AI agent in the background.
-3. As Gemini generates text, the server pushes `ai-chunk` events to that user's socket. If the agent calls the search tool, an `ai-status` event is sent first.
+3. If a Gemini model is overloaded, fails or stops responding, the next model in `GEMINI_MODELS` takes over (and continues the answer if it was cut off mid-way). As Gemini generates text, the server pushes `ai-chunk` events to that user's socket. If the agent calls the search tool, an `ai-status` event is sent first.
 4. When done, the full answer is saved and `ai-complete` is emitted. A failure emits `ai-error`.
 5. The client can emit `stop-generation` to cancel an answer in progress.
 6. In production the Express server also serves the built React app, so everything runs as one service.
@@ -225,6 +226,7 @@ All variables go in `Backend/.env` (template: [`Backend/.env.example`](Backend/.
 | `FRONTEND_URL` | Yes | Public URL of the app (CORS and the verification link) |
 | `NODE_ENV` | No | Set `production` in deployment so the auth cookie is `Secure` |
 | `GEMINI_API_KEY` | Yes | Main chat model |
+| `GEMINI_MODELS` | No | Comma-separated Gemini models tried in order (default: `gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-3.5-flash,gemini-flash-lite-latest`) |
 | `MISTRAL_API_KEY` | Yes | Chat title generation |
 | `TAVILY_API_KEY` | Yes | Internet search tool |
 | `BREVO_API_KEY` | Yes | Sends verification emails |
@@ -322,7 +324,8 @@ The root `package.json` is set up for hosts like Render: the build command insta
 | Login says "verify your email" | Open the link in the verification email first. |
 | Browser shows old UI after a change | The backend serves `Frontend/dist`. Rebuild with `npm run build --prefix Frontend` and hard-refresh. |
 | CORS or cookie problems in development | Make sure `FRONTEND_URL` matches the exact origin you open in the browser. |
-| AI replies fail | Check `GEMINI_API_KEY` and that the key has quota. Search needs `TAVILY_API_KEY`. |
+| AI replies fail | Check `GEMINI_API_KEY` and its quota. If a model is overloaded the app falls back to the next one in `GEMINI_MODELS`; the server log shows which models failed. |
+| Web search never returns results | Check `TAVILY_API_KEY` is set. The server log prints the Tavily error. |
 | Google button says "not configured" | Set `GOOGLE_OAUTH_CLIENT_ID` and authorize your origin in Google Cloud. |
 
 ---

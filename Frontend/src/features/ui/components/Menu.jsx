@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 /**
  * Popover menu positioned with `position: fixed` next to an anchor element,
@@ -97,7 +98,10 @@ const Menu = ({
 
   if (!open) return null;
 
-  return (
+  // Rendered in a portal on <body>: the sidebar has transforms and
+  // overflow clipping, which would otherwise mis-position or cut off a
+  // fixed menu and make it appear on top of the wrong chat.
+  return createPortal(
     <div
       ref={menuRef}
       role="menu"
@@ -111,7 +115,8 @@ const Menu = ({
       }}
     >
       {children}
-    </div>
+    </div>,
+    document.body,
   );
 };
 

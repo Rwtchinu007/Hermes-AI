@@ -1,5 +1,5 @@
-import dotenv from "dotenv";
-dotenv.config();
+// Must be the first import so every module below sees the .env values
+import "dotenv/config";
 
 import app from "./src/app.js";
 import connectDB from "./src/config/database.js";

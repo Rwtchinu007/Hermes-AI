@@ -21,20 +21,20 @@ import * as z from "zod";
 import { searchInternet } from "./internet.service.js";
 
 // ==================================================
-// GEMINI MODEL
+// GEMINI MODELS (tried in order until one works)
 // ==================================================
 
-const geminiModel = new ChatGoogleGenerativeAI({
-  model: "gemini-3.5-flash-lite",
-  apiKey: process.env.GEMINI_API_KEY,
-
-  // Tag this model so we can identify
-  // its response tokens during streaming
-  tags: ["hermes-response"],
-});
+// Override with GEMINI_MODELS="model-a,model-b,model-c" in .env
+const GEMINI_MODELS = (
+  process.env.GEMINI_MODELS ||
+  "gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-3.5-flash,gemini-flash-lite-latest"
+)
+  .split(",")
+  .map((name) => name.trim())
+  .filter(Boolean);
 
 // ==================================================
-// MISTRAL MODEL
+// MISTRAL MODEL (chat titles)
 // ==================================================
 
 const mistralModel = new ChatMistralAI({
@@ -57,34 +57,36 @@ const searchInternetTool = tool(searchInternet, {
 });
 
 // ==================================================
-// GEMINI AGENT
+// AGENTS (one per Gemini model, created on first use)
 // ==================================================
 
-const agent = createAgent({
-  model: geminiModel,
-  tools: [searchInternetTool],
-});
+const agents = new Map();
+
+function getAgent(modelName) {
+  if (!agents.has(modelName)) {
+    const model = new ChatGoogleGenerativeAI({
+      model: modelName,
+      apiKey: process.env.GEMINI_API_KEY,
+      // Fail over quickly instead of retrying the same overloaded model
+      maxRetries: 1,
+      // Tag this model so we can identify its response tokens while streaming
+      tags: ["hermes-response"],
+    });
+
+    agents.set(
+      modelName,
+      createAgent({ model, tools: [searchInternetTool] }),
+    );
+  }
+
+  return agents.get(modelName);
+}
 
 // ==================================================
-// STREAMING AI RESPONSE
+// SYSTEM PROMPT
 // ==================================================
 
-/**
- * @param {Array} messages conversation history (Message documents)
- * @param {Object} [options]
- * @param {AbortSignal} [options.signal] cancels generation when aborted
- * @param {(status: string) => void} [options.onStatus] called with
- *   "searching" when the model starts a web search tool call
- */
-export async function* generateResponse(messages, { signal, onStatus } = {}) {
-  const stream = await agent.stream(
-    {
-      messages: [
-        // ==========================================
-        // SYSTEM PROMPT
-        // ==========================================
-
-        new SystemMessage(`
+const buildSystemPrompt = () => `
 You are Hermes.ai, a helpful AI assistant.
 
 Answer the user's question clearly, accurately, and naturally.
@@ -150,66 +152,185 @@ For web-search questions:
 - Do not expose raw search results.
 
 Keep every response clean, readable, and useful.
-`),
 
-        // ==========================================
-        // CONVERSATION HISTORY
-        // ==========================================
+SEARCH RELIABILITY:
 
-        ...messages
-          .map((msg) => {
-            if (msg.role === "user") {
-              return new HumanMessage(msg.content);
-            }
+- Today is ${new Date().toDateString()}. Use this when searching for recent information.
+- After using the search tool, ALWAYS finish with a complete written answer.
+- If the search fails or returns nothing useful, say you could not reach live
+  sources, then answer from your own knowledge and state that it may be out of date.
+`;
 
-            if (msg.role === "ai") {
-              return new AIMessage(msg.content);
-            }
+// ==================================================
+// HELPERS
+// ==================================================
 
-            return null;
-          })
-          .filter(Boolean),
-      ],
-    },
-    {
-      streamMode: "messages",
-      signal,
-    },
-  );
+const CONTINUE_PROMPT =
+  "Your previous reply was cut off. Continue from exactly where it stopped. " +
+  "Do not repeat anything you already wrote and do not add an introduction.";
 
-  // ==================================================
-  // STREAM ONLY THE ACTUAL AI RESPONSE
-  // ==================================================
+// Gemini can return content as a string or as an array of parts
+function extractText(content) {
+  if (typeof content === "string") return content;
+  if (!Array.isArray(content)) return "";
 
-  let reportedSearch = false;
+  return content
+    .map((part) => {
+      if (typeof part === "string") return part;
+      if (part?.type === "text" && typeof part.text === "string") return part.text;
+      return "";
+    })
+    .join("");
+}
 
-  for await (const [token, metadata] of stream) {
-    if (signal?.aborted) {
-      return;
+// ==================================================
+// STREAM ONE MODEL
+// ==================================================
+
+// A model that stops responding is abandoned so the next one can take over.
+const IDLE_TIMEOUT_MS = 25000; // waiting for the first / next token
+const SEARCH_IDLE_TIMEOUT_MS = 60000; // allows time for the web search itself
+
+async function* streamWithModel(modelName, messages, { signal, onStatus }) {
+  // Own controller so a stalled model can be cancelled without cancelling
+  // the user's request (the user's stop button still aborts everything).
+  const attempt = new AbortController();
+  const forwardAbort = () => attempt.abort();
+  signal?.addEventListener("abort", forwardAbort, { once: true });
+
+  let timedOut = false;
+  let timer;
+  const arm = (ms) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      timedOut = true;
+      attempt.abort();
+    }, ms);
+  };
+
+  try {
+    arm(IDLE_TIMEOUT_MS);
+
+    // "messages" streams the answer tokens; "updates" tells us when the
+    // model decided to call the search tool (before the tool runs).
+    const stream = await getAgent(modelName).stream(
+      { messages },
+      { streamMode: ["messages", "updates"], signal: attempt.signal },
+    );
+
+    let reportedSearch = false;
+
+    for await (const [mode, data] of stream) {
+      if (signal?.aborted) return;
+
+      arm(reportedSearch ? SEARCH_IDLE_TIMEOUT_MS : IDLE_TIMEOUT_MS);
+
+      if (mode === "updates") {
+        const calledTool = Object.values(data ?? {}).some((update) =>
+          update?.messages?.some?.((message) => message?.tool_calls?.length),
+        );
+        if (calledTool && !reportedSearch) {
+          reportedSearch = true;
+          arm(SEARCH_IDLE_TIMEOUT_MS);
+          onStatus?.("searching");
+        }
+        continue;
+      }
+
+      const [token, metadata] = data;
+
+      // Ignore anything that is not an AI message chunk
+      if (!isAIMessageChunk(token)) continue;
+
+      // Only accept tokens from our Gemini response model
+      if (!metadata?.tags?.includes("hermes-response")) continue;
+
+      const text = extractText(token.content);
+      if (text) yield text;
     }
-
-    // Ignore anything that isn't an AI message chunk
-    if (!isAIMessageChunk(token)) {
-      continue;
+  } catch (error) {
+    if (timedOut) {
+      throw new Error(`${modelName} stopped responding (timed out)`);
     }
-
-    // Only accept tokens from our Gemini response model
-    if (!metadata?.tags?.includes("hermes-response")) {
-      continue;
-    }
-
-    // The model is calling the web search tool
-    if (!reportedSearch && token.tool_call_chunks?.length) {
-      reportedSearch = true;
-      onStatus?.("searching");
-    }
-
-    // Gemini normally returns text content as a string
-    if (typeof token.content === "string") {
-      yield token.content;
-    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener("abort", forwardAbort);
   }
 }
+
+// ==================================================
+// STREAMING AI RESPONSE (with model fallback)
+// ==================================================
+
+/**
+ * @param {Array} messages conversation history (Message documents)
+ * @param {Object} [options]
+ * @param {AbortSignal} [options.signal] cancels generation when aborted
+ * @param {(status: string) => void} [options.onStatus] called with
+ *   "searching" when the model starts a web search tool call
+ *
+ * If a model fails (overloaded, rate limited, empty answer, cut off mid-way)
+ * the next model in GEMINI_MODELS takes over. When some text was already
+ * streamed, the next model is asked to continue from that point.
+ */
+export async function* generateResponse(messages, { signal, onStatus } = {}) {
+  const history = messages
+    .map((msg) => {
+      if (msg.role === "user") return new HumanMessage(msg.content);
+      if (msg.role === "ai") return new AIMessage(msg.content);
+      return null;
+    })
+    .filter(Boolean);
+
+  const system = new SystemMessage(buildSystemPrompt());
+
+  let produced = "";
+  let lastError = null;
+
+  for (const modelName of GEMINI_MODELS) {
+    if (signal?.aborted) return;
+
+    const input = [
+      system,
+      ...history,
+      ...(produced
+        ? [new AIMessage(produced), new HumanMessage(CONTINUE_PROMPT)]
+        : []),
+    ];
+
+    try {
+      let producedByThisModel = false;
+
+      for await (const text of streamWithModel(modelName, input, {
+        signal,
+        onStatus,
+      })) {
+        producedByThisModel = true;
+        produced += text;
+        yield text;
+      }
+
+      if (signal?.aborted) return;
+      if (producedByThisModel || produced) return; // finished normally
+
+      // Model finished without writing anything: try the next one
+      lastError = new Error(`${modelName} returned an empty response`);
+      console.warn(lastError.message);
+    } catch (error) {
+      if (signal?.aborted) return;
+
+      lastError = error;
+      console.warn(
+        `Gemini model "${modelName}" failed, trying next model:`,
+        error?.message || error,
+      );
+    }
+  }
+
+  throw lastError || new Error("No Gemini model is configured");
+}
+
 
 // ==================================================
 // CHAT TITLE GENERATION
